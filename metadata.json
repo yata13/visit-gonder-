@@ -1,0 +1,7 @@
+{
+  "name": "Visit Gondar — Digital Tourism Hub",
+  "description": "A comprehensive digital tourism platform for the historical city of Gondar, featuring attractions, hotels, interactive maps, and a dedicated Timket guide with English and Amharic support.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
