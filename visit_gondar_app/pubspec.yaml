@@ -1,0 +1,55 @@
+name: visit_gondar
+description: "Visit Gondar — Tourism app for Gondar, Ethiopia"
+publish_to: 'none'
+version: 1.4.0+5
+
+environment:
+  sdk: ^3.12.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # --- Backend ---
+  supabase_flutter: ^2.8.4       # Supabase (database, auth, storage)
+
+  # --- State Management ---
+  flutter_riverpod: ^2.6.1       # Riverpod (best state management for Flutter)
+
+  # --- UI ---
+  cached_network_image: ^3.4.1   # Cache images from network
+  shimmer: ^3.0.0                # Loading skeleton effect
+  timeago: ^3.7.0                # "2 min ago" formatting
+
+  # --- Maps ---
+  flutter_map: ^7.0.2              # Real interactive map (OpenStreetMap, free)
+  latlong2: ^0.9.1                 # Lat/lng coordinate helpers
+  geolocator: ^13.0.2             # Real device GPS location (for SOS)
+
+  # --- Utils ---
+  shared_preferences: ^2.3.5    # Save small data locally (language choice etc)
+  intl: ^0.20.2                  # Date/number formatting
+  url_launcher: ^6.3.1           # Open maps, phone calls, websites
+  flutter_dotenv: ^5.2.1         # Load .env secrets safely
+  audioplayers: ^6.0.0           # Play notification sound
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.1   # Generates the app icon on the phone
+
+# --- App icon generator (run: dart run flutter_launcher_icons) ---
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  remove_alpha_ios: true
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
+    - assets/sounds/
+    - assets/images/
