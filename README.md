@@ -8,9 +8,12 @@ The platform has two apps that share one Supabase backend:
 | Folder | What it is | Runs on |
 |---|---|---|
 | [`visit_gondar_app/`](visit_gondar_app/) | Tourist app — explore sites, book hotels & guides, live map, SOS emergency | Android / iOS (Flutter) |
-| [`visit_gondar_admin/`](visit_gondar_admin/) | Admin dashboard — manage hotels, guides, sites, events, bookings, news feed, safety alerts | Web browser (Flutter Web) |
+| [`admin_web/`](admin_web/) | Admin dashboard — hotels, guides, sites, events, news, map manager, bookings & Chapa deposits, safety zones, SOS requests, notifications, availability, Gondar Passport, users & roles | Web browser (React + TypeScript) |
 | [`supabase/`](supabase/) | Migrations + docs for the shared Supabase database | Supabase SQL Editor |
 | [`docs/`](docs/) | Team documentation (Git workflow guide, etc.) | — |
+
+> The old Flutter Web admin (`visit_gondar_admin/`) was fully converted to
+> `admin_web/` and removed. It still exists in git history if ever needed.
 
 ## Quick start
 
@@ -23,18 +26,18 @@ cd visit-gonder-
 
 # 2. Add your secret keys (ask the project owner for the values)
 #    Copy .env.example to .env inside EACH project:
-#      visit_gondar_app/.env.example    →  visit_gondar_app/.env
-#      visit_gondar_admin/.env.example  →  visit_gondar_admin/.env
+#      visit_gondar_app/.env.example  →  visit_gondar_app/.env
+#      admin_web/.env.example         →  admin_web/.env
 
 # 3. Run the tourist app (phone/emulator)
 cd visit_gondar_app
 flutter pub get
 flutter run
 
-# 4. Run the admin dashboard (browser)
-cd ../visit_gondar_admin
-flutter pub get
-flutter run -d chrome
+# 4. Run the admin dashboard (browser) — needs Node.js 18+
+cd ../admin_web
+npm install
+npm run dev
 ```
 
 > ⚠️ **Never commit the `.env` files.** They are git-ignored on purpose.
@@ -42,10 +45,10 @@ flutter run -d chrome
 
 ## Tech stack
 
-- **Flutter + Dart** — one codebase for mobile and web
+- **Flutter + Dart** — the tourist app (Android / iOS)
+- **React + TypeScript + Vite + Tailwind** — the admin dashboard
 - **Supabase** — database (Postgres), auth, storage, realtime alerts
-- **Riverpod** — state management
-- **flutter_map / OpenStreetMap** — free interactive maps
+- **flutter_map & Leaflet / OpenStreetMap** — free interactive maps
 
 ## For the team
 

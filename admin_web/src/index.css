@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/* Visit Gondar admin theme — Burnt Orange & Charcoal.
+   Converted 1:1 from the old Flutter admin (admin_theme.dart):
+   gold #FF6D29 · charcoal #161316 · background #F7F4F1 · border #EAE5E0 */
+:root {
+  --background: 30 27% 96%; /* #F7F4F1 warm white */
+  --foreground: 300 7% 8%; /* #161316 charcoal */
+  --card: 0 0% 100%;
+  --card-foreground: 300 7% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 300 7% 8%;
+  --primary: 19 100% 58%; /* #FF6D29 vibrant orange */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 19 100% 93%; /* #FFE7DC soft orange tint */
+  --secondary-foreground: 17 71% 29%; /* #7E3315 rust dark */
+  --muted: 30 25% 93%;
+  --muted-foreground: 28 5% 52%; /* #8C857F */
+  --accent: 19 100% 93%; /* goldLight hover tint */
+  --accent-foreground: 300 7% 8%;
+  --destructive: 0 75% 42%; /* #BA1A1A */
+  --destructive-foreground: 0 0% 100%;
+  --border: 30 19% 90%; /* #EAE5E0 */
+  --input: 30 15% 84%;
+  --ring: 19 100% 58%;
+  --radius: 0.625rem; /* 10px, like the old admin */
+
+  /* Status colors from AdminColors */
+  --success: 150 60% 30%; /* #1F7A4D */
+  --success-bg: 140 40% 92%; /* #E3F3E9 */
+  --warning: 19 78% 46%; /* #D2541A */
+  --warning-bg: 24 100% 95%; /* #FFF0E6 */
+  --info: 16 71% 42%; /* #B5481F burnt orange */
+  --info-bg: 18 76% 93%; /* #FBE9E1 */
+
+  /* Charcoal sidebar */
+  --sidebar: 300 7% 8%; /* #161316 */
+  --sidebar-hover: 15 40% 12%; /* #2A1812 */
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-success: hsl(var(--success));
+  --color-success-bg: hsl(var(--success-bg));
+  --color-warning: hsl(var(--warning));
+  --color-warning-bg: hsl(var(--warning-bg));
+  --color-info: hsl(var(--info));
+  --color-info-bg: hsl(var(--info-bg));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-hover: hsl(var(--sidebar-hover));
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      "Noto Sans Ethiopic",
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
+  }
+}
+
+/* Leaflet (safety map) needs its container sized by the parent. */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
