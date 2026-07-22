@@ -2,7 +2,7 @@ import * as React from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
-export type AdminRole = "admin" | "editor";
+export type AdminRole = "admin" | "editor" | "staff";
 
 interface AuthContextValue {
   session: Session | null;
@@ -21,7 +21,9 @@ async function fetchRole(userId: string): Promise<AdminRole | null> {
     .eq("user_id", userId)
     .maybeSingle();
   if (error || !data) return null;
-  return data.role === "admin" || data.role === "editor" ? data.role : null;
+  return data.role === "admin" || data.role === "editor" || data.role === "staff"
+    ? data.role
+    : null;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

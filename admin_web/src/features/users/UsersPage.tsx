@@ -6,7 +6,13 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MoreHorizontal, ShieldCheck, ShieldMinus, UserCog } from "lucide-react";
+import {
+  Headset,
+  MoreHorizontal,
+  ShieldCheck,
+  ShieldMinus,
+  UserCog,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { errorMessage, formatDate } from "@/lib/utils";
 import type { Tables } from "@/lib/database.types";
@@ -22,7 +28,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type UserRow = Tables<"users">;
 type RoleRow = Tables<"user_roles">;
@@ -55,9 +60,18 @@ async function listRoles(): Promise<Map<string, string>> {
   return new Map((data as RoleRow[]).map((r) => [r.user_id, r.role]));
 }
 
+type GrantableRole = "admin" | "editor" | "staff";
+
 type PendingAction =
-  | { kind: "grant"; role: "admin" | "editor"; user: UserRow }
+  | { kind: "grant"; role: GrantableRole; user: UserRow }
   | { kind: "revoke"; user: UserRow };
+
+const ROLE_EXPLANATION: Record<GrantableRole, string> = {
+  admin: "Admins can manage all content, bookings, money, users and roles.",
+  editor: "Editors can manage content but not users, roles or money.",
+  staff:
+    "Staff (employees) run daily operations — bookings, SOS requests, content — but cannot see money or manage users.",
+};
 
 export default function UsersPage() {
   const { session, role: myRole } = useAuth();
@@ -139,6 +153,7 @@ export default function UsersPage() {
         const r = roles?.get(u.id);
         if (r === "admin") return <Badge>Admin</Badge>;
         if (r === "editor") return <Badge variant="secondary">Editor</Badge>;
+        if (r === "staff") return <Badge variant="warning">Staff</Badge>;
         return <span className="text-muted-foreground">Tourist</span>;
       },
     },
@@ -182,6 +197,13 @@ export default function UsersPage() {
                   <UserCog /> Make editor
                 </DropdownMenuItem>
               )}
+              {r !== "staff" && (
+                <DropdownMenuItem
+                  onClick={() => setPending({ kind: "grant", role: "staff", user: u })}
+                >
+                  <Headset /> Make staff (employee)
+                </DropdownMenuItem>
+              )}
               {r && (
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
@@ -203,18 +225,10 @@ export default function UsersPage() {
         <h1 className="text-xl font-semibold">Users & roles</h1>
         <p className="text-sm text-muted-foreground">
           Everyone with an account. Admins manage everything; editors manage
-          content; tourists have no dashboard access.
+          content; staff run daily operations (no money, no user management);
+          tourists have no dashboard access.
         </p>
       </div>
-
-      {myRole !== "admin" && (
-        <Alert variant="warning">
-          <AlertTitle>View only</AlertTitle>
-          <AlertDescription>
-            Only admins can change roles. You are signed in as an editor.
-          </AlertDescription>
-        </Alert>
-      )}
 
       <DataTable
         columns={columns}
@@ -245,9 +259,7 @@ export default function UsersPage() {
         }
         description={
           pending?.kind === "grant"
-            ? pending.role === "admin"
-              ? "Admins can manage all content, bookings, users and roles."
-              : "Editors can manage content but not users or roles."
+            ? ROLE_EXPLANATION[pending.role]
             : "They will lose access to this dashboard immediately."
         }
         confirmLabel={pending?.kind === "grant" ? "Yes, change role" : "Yes, remove"}

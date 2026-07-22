@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { errorMessage, formatDate } from "@/lib/utils";
 import type { Tables } from "@/lib/database.types";
+import { useAuth } from "@/features/auth/AuthProvider";
 import { DataTable, useDebounced, type Column } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -166,6 +167,9 @@ function StatCard({
 
 export default function BookingsPage() {
   const queryClient = useQueryClient();
+  const { role } = useAuth();
+  // Finance is admin-only: staff/editors manage bookings without seeing money.
+  const isAdmin = role === "admin";
   const [page, setPage] = React.useState(0);
   const [search, setSearch] = React.useState("");
   const [type, setType] = React.useState("all");
@@ -178,7 +182,11 @@ export default function BookingsPage() {
     placeholderData: keepPreviousData,
   });
 
-  const stats = useQuery({ queryKey: ["bookings", "stats"], queryFn: bookingStats });
+  const stats = useQuery({
+    queryKey: ["bookings", "stats"],
+    queryFn: bookingStats,
+    enabled: isAdmin,
+  });
 
   const statusMutation = useMutation({
     mutationFn: async ({ id, next }: { id: string; next: string }) => {
@@ -257,16 +265,20 @@ export default function BookingsPage() {
         </span>
       ),
     },
-    {
-      key: "commission",
-      header: "COMMISSION",
-      className: "whitespace-nowrap",
-      render: (b) => (
-        <span className="font-mono font-bold text-success">
-          ${Number(b.commission_amount ?? b.commission_earned ?? 0).toFixed(0)}
-        </span>
-      ),
-    },
+    ...(isAdmin
+      ? [
+          {
+            key: "commission",
+            header: "COMMISSION",
+            className: "whitespace-nowrap",
+            render: (b: Booking) => (
+              <span className="font-mono font-bold text-success">
+                ${Number(b.commission_amount ?? b.commission_earned ?? 0).toFixed(0)}
+              </span>
+            ),
+          } satisfies Column<Booking>,
+        ]
+      : []),
     {
       key: "payment",
       header: "CHAPA DEPOSIT",
@@ -311,47 +323,50 @@ export default function BookingsPage() {
       <div>
         <h2 className="text-[22px] font-extrabold">Reservations & Commissions Panel</h2>
         <p className="text-sm text-muted-foreground">
-          Review bookings, service status and commission (3% hotels · 10% guides).
-          Deposit status comes from the Chapa payment webhook.
+          {isAdmin
+            ? "Review bookings, service status and commission (3% hotels · 10% guides). Deposit status comes from the Chapa payment webhook."
+            : "Review reservations and approve or reject them. Deposit status comes from the Chapa payment webhook."}
         </p>
       </div>
       <div className="border-t" />
 
-      {/* Money stat cards, like the old admin */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="APPROVED SALES"
-          value={`$${(stats.data?.sales ?? 0).toFixed(2)}`}
-          sub="Gross income"
-          icon={DollarSign}
-          className="bg-success-bg"
-          iconClass="text-success"
-        />
-        <StatCard
-          title="COMMISSION"
-          value={`$${(stats.data?.commission ?? 0).toFixed(2)}`}
-          sub="Visit Gondar cut"
-          icon={ReceiptText}
-          className="bg-secondary"
-          iconClass="text-primary"
-        />
-        <StatCard
-          title="PENDING APPROVAL"
-          value={`${stats.data?.pending ?? 0} Requests`}
-          sub="Awaiting your action"
-          icon={Hourglass}
-          className="bg-warning-bg"
-          iconClass="text-warning"
-        />
-        <StatCard
-          title="APPROVED BOOKINGS"
-          value={`${stats.data?.approved ?? 0} Bookings`}
-          sub="Settled payments"
-          icon={CheckCircle2}
-          className="bg-success-bg"
-          iconClass="text-success"
-        />
-      </div>
+      {/* Money stat cards — admin only (staff manage bookings without seeing finance) */}
+      {isAdmin && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="APPROVED SALES"
+            value={`$${(stats.data?.sales ?? 0).toFixed(2)}`}
+            sub="Gross income"
+            icon={DollarSign}
+            className="bg-success-bg"
+            iconClass="text-success"
+          />
+          <StatCard
+            title="COMMISSION"
+            value={`$${(stats.data?.commission ?? 0).toFixed(2)}`}
+            sub="Visit Gondar cut"
+            icon={ReceiptText}
+            className="bg-secondary"
+            iconClass="text-primary"
+          />
+          <StatCard
+            title="PENDING APPROVAL"
+            value={`${stats.data?.pending ?? 0} Requests`}
+            sub="Awaiting your action"
+            icon={Hourglass}
+            className="bg-warning-bg"
+            iconClass="text-warning"
+          />
+          <StatCard
+            title="APPROVED BOOKINGS"
+            value={`${stats.data?.approved ?? 0} Bookings`}
+            sub="Settled payments"
+            icon={CheckCircle2}
+            className="bg-success-bg"
+            iconClass="text-success"
+          />
+        </div>
+      )}
 
       <DataTable
         columns={columns}

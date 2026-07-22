@@ -1,5 +1,6 @@
-import { createBrowserRouter, Link, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Link, Navigate, RouterProvider } from "react-router-dom";
 import RequireAdmin from "@/features/auth/RequireAdmin";
+import { useAuth } from "@/features/auth/AuthProvider";
 import LoginPage from "@/features/auth/LoginPage";
 import AppShell from "@/components/layout/AppShell";
 import DashboardPage from "@/features/dashboard/DashboardPage";
@@ -12,6 +13,13 @@ import NotificationsPage from "@/features/notifications/NotificationsPage";
 import SafetyPage from "@/features/safety/SafetyPage";
 import EmergencyPage from "@/features/emergency/EmergencyPage";
 import { Button } from "@/components/ui/button";
+
+/** Settings pages (Users & Roles) are for admins only — staff/editors are sent home. */
+function AdminOnly({ children }: { children: React.ReactNode }) {
+  const { role } = useAuth();
+  if (role !== "admin") return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
 
 function NotFound() {
   return (
@@ -45,7 +53,14 @@ const router = createBrowserRouter([
       { path: "emergency", element: <EmergencyPage /> },
       { path: "availability", element: <AvailabilityPage /> },
       { path: "passport", element: <PassportPage /> },
-      { path: "users", element: <UsersPage /> },
+      {
+        path: "users",
+        element: (
+          <AdminOnly>
+            <UsersPage />
+          </AdminOnly>
+        ),
+      },
       { path: "*", element: <NotFound /> },
     ],
   },

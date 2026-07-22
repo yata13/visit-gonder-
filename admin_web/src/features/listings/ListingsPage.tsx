@@ -39,6 +39,7 @@ import { normalizePublishStatus } from "@/components/publish-badge";
 import { LISTINGS, isListingType, type AnyRow } from "./registry";
 import { deleteListing, listListings, setListingStatus } from "./api";
 import { ListingForm } from "./ListingForm";
+import { PlacesMap } from "./PlacesMap";
 
 const PAGE_SIZE = 10;
 
@@ -214,6 +215,9 @@ function ListingsInner({ type }: { type: keyof typeof LISTINGS }) {
           <Plus /> New {config.singular}
         </Button>
       </div>
+
+      {/* The Map Manager shows the live map above its table. */}
+      {type === "places" && <PlacesMap />}
 
       <DataTable
         columns={[...config.columns, actionsColumn]}

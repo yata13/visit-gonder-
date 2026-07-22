@@ -78,7 +78,9 @@ function SidebarTile({
 }
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const { signOut } = useAuth();
+  const { signOut, role } = useAuth();
+  // Users & Roles is the settings area — admins only.
+  const items = NAV.filter((n) => n.to !== "/users" || role === "admin");
   return (
     <div className="flex h-full flex-col bg-sidebar">
       {/* Logo area — orange tile + brand, like the Flutter shell */}
@@ -95,7 +97,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="border-t border-white/10" />
 
       <nav className="mt-2 flex-1 overflow-y-auto px-3">
-        {NAV.map((item) => (
+        {items.map((item) => (
           <SidebarTile key={item.to} {...item} onNavigate={onNavigate} />
         ))}
       </nav>
@@ -172,7 +174,7 @@ export default function AppShell() {
           </h1>
           <div className="flex-1" />
           <Badge variant={role === "admin" ? "default" : "secondary"}>
-            {role === "admin" ? "Admin" : "Editor"}
+            {role === "admin" ? "Admin" : role === "staff" ? "Staff" : "Editor"}
           </Badge>
           <div className="hidden items-center gap-2 rounded-full border bg-background py-1.5 pl-1.5 pr-3 sm:flex">
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
