@@ -27,6 +27,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatMoney } from "@/lib/utils";
 import type { Tables } from "@/lib/database.types";
+import { WeatherCard } from "./WeatherCard";
+import { AskTheCity } from "./AskTheCity";
 
 const CONTENT_TABLES = [
   "hotels",
@@ -340,6 +342,12 @@ export default function DashboardPage() {
           value={data?.users}
           loading={isPending}
         />
+      </div>
+
+      {/* ── Weather + Ask the City (proposal page 7) ── */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <WeatherCard />
+        <AskTheCity />
       </div>
 
       {/* ── Graphs ── */}

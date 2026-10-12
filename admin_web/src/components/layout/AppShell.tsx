@@ -2,6 +2,7 @@ import * as React from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Bell,
+  BotMessageSquare,
   Building2,
   CalendarRange,
   CircleUserRound,
@@ -35,6 +36,7 @@ const NAV = [
   { to: "/listings/events", label: "Events", icon: PartyPopper },
   { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/listings/posts", label: "News Feed", icon: Newspaper },
+  { to: "/listings/ai_knowledge", label: "AI Knowledge", icon: BotMessageSquare },
   { to: "/listings/places", label: "Map Manager", icon: MapPin },
   { to: "/bookings", label: "Bookings", icon: ReceiptText },
   { to: "/safety", label: "Safety", icon: Shield },

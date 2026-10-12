@@ -3,7 +3,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/booking_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/tier_provider.dart';
 import '../../theme/app_theme.dart';
+import '../ai/ask_gondar_screen.dart';
+import '../premium/premium_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  ACCOUNT — real profile from Supabase auth, real bookings from
@@ -141,6 +145,16 @@ class _AccountScreenState extends State<AccountScreen> {
                       style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
                 ]),
               ),
+              const SizedBox(height: 20),
+
+              // Plan — Free or Premium (read from user_tiers)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Consumer(builder: (context, ref, _) {
+                  final tier = ref.watch(userTierProvider).value ?? UserTier.guest;
+                  return _planCard(context, tier);
+                }),
+              ),
               const SizedBox(height: 28),
 
               // My Bookings — live from the bookings table
@@ -212,6 +226,45 @@ class _AccountScreenState extends State<AccountScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _planCard(BuildContext context, UserTier tier) {
+    final premium = tier.isPremium;
+    final subtitle = premium
+        ? 'Ask Gondar AI and all Premium extras are on'
+        : tier.requestPending
+            ? 'Premium request sent — waiting for approval'
+            : 'Upgrade for Ask Gondar AI, offline packs and more';
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) =>
+              premium ? const AskGondarScreen() : const PremiumScreen())),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: premium ? AppColors.charcoal : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: premium ? AppColors.gold : AppColors.surfaceVariant),
+        ),
+        child: Row(children: [
+          Icon(premium ? Icons.workspace_premium : Icons.person_outline_rounded,
+              color: premium ? AppColors.gold : AppColors.charcoal, size: 28),
+          const SizedBox(width: 12),
+          Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(premium ? 'Premium plan' : 'Free plan',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800,
+                    color: premium ? AppColors.gold : AppColors.charcoal)),
+            const SizedBox(height: 2),
+            Text(subtitle, style: TextStyle(fontSize: 12.5,
+                color: premium ? const Color(0xFFB3A899) : AppColors.textMuted)),
+          ])),
+          Icon(Icons.chevron_right,
+              color: premium ? AppColors.gold : AppColors.textMuted),
+        ]),
       ),
     );
   }

@@ -20,6 +20,10 @@ import '../posts/post_detail_screen.dart';
 import '../posts/post_card.dart';
 import '../posts/feed_screen.dart';
 import '../planner/trip_planner_screen.dart';
+import '../account/account_screen.dart';
+import '../ai/ask_gondar_screen.dart';
+import '../../providers/tier_provider.dart';
+import '../../widgets/weather_card.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  HOME — premium heritage design, live Supabase data, real search
@@ -193,6 +197,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           letterSpacing: -0.3)),
                 ]),
                 Row(children: [
+                  _PressScale(
+                    onTap: () => _push(const AccountScreen()),
+                    child: Container(
+                      width: 42, height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(13),
+                        border: Border.all(color: AppColors.surfaceVariant),
+                      ),
+                      child: Icon(
+                        ref.watch(userTierProvider).value?.isPremium ?? false
+                            ? Icons.workspace_premium
+                            : Icons.person_outline_rounded,
+                        size: 21, color: AppColors.charcoal),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   _PressScale(
                     onTap: _openNotifications,
                     child: Container(
@@ -451,6 +472,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ]),
           ),
         )),
+        const SizedBox(height: 12),
+
+        // ── Ask Gondar — Premium AI guide ─────────────────
+        _animated(2, _PressScale(
+          onTap: () => _push(const AskGondarScreen()),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.charcoal,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(children: [
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withAlpha(40),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(Icons.forum_rounded,
+                    color: AppColors.gold, size: 22),
+              ),
+              const SizedBox(width: 13),
+              Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Text(isAm(lang) ? 'ጎንደርን ይጠይቁ' : 'Ask Gondar',
+                      style: const TextStyle(color: Color(0xFFFBF7F0),
+                          fontSize: 15, fontWeight: FontWeight.w800)),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.gold,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(isAm(lang) ? 'ፕሪሚየም' : 'PREMIUM',
+                        style: const TextStyle(fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.goldDeep, letterSpacing: 0.8)),
+                  ),
+                ]),
+                const SizedBox(height: 2),
+                Text(isAm(lang) ? 'በከተማው የጸደቀ መልስ የሚሰጥ AI መመሪያ'
+                        : 'AI guide with City-approved answers',
+                    style: const TextStyle(color: Color(0xFFB3A899),
+                        fontSize: 12.5)),
+              ])),
+              const Icon(Icons.arrow_forward_rounded,
+                  color: AppColors.gold, size: 20),
+            ]),
+          ),
+        )),
         const SizedBox(height: 20),
 
         // ── Featured hero (first site, LIVE) ──────────────
@@ -482,6 +556,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 )
               : _TimketCard(remaining: d, lang: lang, photo: timketPhoto),
         )),
+        const SizedBox(height: 20),
+
+        // ── Live weather: today + 7 days (free) ───────────
+        _animated(3, const WeatherCard()),
         const SizedBox(height: 28),
 
         // ── Quick links ───────────────────────────────────

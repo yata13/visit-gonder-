@@ -6,6 +6,9 @@ import '../../providers/language_provider.dart';
 import '../hotels/hotels_screen.dart';
 import '../guides/guide_profile_screen.dart';
 import '../timket/timket_roadmap.dart';
+import '../../providers/weather_provider.dart';
+import '../../services/weather_service.dart';
+import '../../widgets/weather_card.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  TRIP PLANNER — the visitor answers 3 questions and the app
@@ -245,6 +248,8 @@ class _PlanResult extends ConsumerWidget {
     final sites = [...(ref.watch(sitesProvider).value ?? const [])];
     final hotels = [...(ref.watch(hotelsProvider).value ?? const [])];
     final guides = [...(ref.watch(guidesProvider).value ?? const [])];
+    // The plan starts today; days inside the 7-day window get a forecast.
+    final weather = ref.watch(weatherProvider).value;
 
     // Pick a hotel by budget.
     hotels.sort((a, b) => hotelPrice(a).compareTo(hotelPrice(b)));
@@ -316,6 +321,8 @@ class _PlanResult extends ConsumerWidget {
         // Day-by-day
         for (int d = 0; d < perDay.length; d++) ...[
           _dayCard(context, d + 1, perDay[d], am,
+              weather: weather?.forDate(
+                  DateTime.now().add(Duration(days: d))),
               // Timket note on day 1 if festival interest
               extraNote: (d == 0 && wantsFestival)
                   ? (am
@@ -381,7 +388,7 @@ class _PlanResult extends ConsumerWidget {
 
   Widget _dayCard(BuildContext context, int day,
       List<Map<String, dynamic>> sites, bool am,
-      {String? extraNote, bool showTimketLink = false}) {
+      {String? extraNote, bool showTimketLink = false, WeatherDay? weather}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -402,12 +409,26 @@ class _PlanResult extends ConsumerWidget {
                 style: const TextStyle(color: AppColors.gold,
                     fontWeight: FontWeight.w800, fontSize: 15)),
             const Spacer(),
-            if (day == 1)
+            if (weather != null)
+              WeatherChip(day: weather, am: am)
+            else if (day == 1)
               Text(am ? 'መድረስ እና ማረፊያ' : 'Arrive & settle in',
                   style: const TextStyle(color: Color(0xFFB3A899),
                       fontSize: 11.5)),
           ]),
         ),
+        if (weather != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Icon(Icons.tips_and_updates_outlined,
+                  size: 15, color: AppColors.goldDark),
+              const SizedBox(width: 6),
+              Expanded(child: Text(WeatherService.tip(weather, am),
+                  style: const TextStyle(fontSize: 12,
+                      color: AppColors.textSecondary, height: 1.35))),
+            ]),
+          ),
         Padding(
           padding: const EdgeInsets.all(14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start,

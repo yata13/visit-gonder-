@@ -32,6 +32,7 @@ dependencies:
   intl: ^0.20.2                  # Date/number formatting
   url_launcher: ^6.3.1           # Open maps, phone calls, websites
   flutter_dotenv: ^5.2.1         # Load .env secrets safely
+  http: ^1.2.2                   # Plain HTTP calls (live weather)
   audioplayers: ^6.0.0           # Play notification sound
 
 dev_dependencies:
