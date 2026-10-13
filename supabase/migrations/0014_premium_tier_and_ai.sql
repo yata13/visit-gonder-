@@ -18,8 +18,54 @@
 -- ai_questions = a log of what was asked (for the City's evidence
 -- and to rate-limit). Both are read by the ask-gondar edge function.
 --
--- Idempotent.
+-- Idempotent. Also safe on a database where 0001–0013 were never
+-- run: the role helpers below are only created if they are missing.
 -- ============================================================
+
+-- ── Role helpers (from 0001/0013) — created only if missing ──
+create table if not exists public.user_roles (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  role       text not null check (role in ('admin','editor','staff')),
+  created_at timestamptz not null default now(),
+  created_by uuid references auth.users(id)
+);
+alter table public.user_roles enable row level security;
+drop policy if exists user_roles_select_own on public.user_roles;
+create policy user_roles_select_own
+  on public.user_roles for select
+  using (user_id = auth.uid());
+revoke insert, update, delete on public.user_roles from anon, authenticated;
+
+do $helpers$
+begin
+  if to_regprocedure('public.is_admin()') is null then
+    execute $f$
+      create function public.is_admin()
+      returns boolean language sql security definer
+      set search_path = public, pg_temp stable
+      as $b$
+        select exists (select 1 from public.user_roles
+                       where user_id = auth.uid() and role = 'admin');
+      $b$;
+      revoke all on function public.is_admin() from public;
+      grant execute on function public.is_admin() to authenticated, anon;
+    $f$;
+  end if;
+  if to_regprocedure('public.is_editor()') is null then
+    execute $f$
+      create function public.is_editor()
+      returns boolean language sql security definer
+      set search_path = public, pg_temp stable
+      as $b$
+        select exists (select 1 from public.user_roles
+                       where user_id = auth.uid() and role in ('admin','editor','staff'));
+      $b$;
+      revoke all on function public.is_editor() from public;
+      grant execute on function public.is_editor() to authenticated, anon;
+    $f$;
+  end if;
+end
+$helpers$;
 
 -- ── Tiers ────────────────────────────────────────────────────
 create table if not exists public.user_tiers (
