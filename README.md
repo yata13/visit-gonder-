@@ -10,7 +10,7 @@ The platform has two apps that share one Supabase backend:
 | [`visit_gondar_app/`](visit_gondar_app/) | Tourist app — explore sites, book hotels & guides, live map, SOS emergency | Android / iOS (Flutter) |
 | [`admin_web/`](admin_web/) | Admin dashboard — hotels, guides, sites, events, news, map manager, bookings & Chapa deposits, safety zones, SOS requests, notifications, availability, Gondar Passport, users & roles | Web browser (React + TypeScript) |
 | [`supabase/`](supabase/) | Migrations + docs for the shared Supabase database | Supabase SQL Editor |
-| [`docs/`](docs/) | Team documentation (Git workflow guide, etc.) | — |
+| [`docs/`](docs/) | Team documentation (Git workflow guide, [proposal check](docs/PROPOSAL_CHECK.md), etc.) | — |
 
 > The old Flutter Web admin (`visit_gondar_admin/`) was fully converted to
 > `admin_web/` and removed. It still exists in git history if ever needed.
@@ -49,6 +49,17 @@ npm run dev
 - **React + TypeScript + Vite + Tailwind** — the admin dashboard
 - **Supabase** — database (Postgres), auth, storage, realtime alerts
 - **flutter_map & Leaflet / OpenStreetMap** — free interactive maps
+- **Open-Meteo** — free live weather (today + 7 days), no API key
+- **Claude (Anthropic)** — the Ask Gondar AI, via the `ask-gondar` Supabase edge function
+
+## Two kinds of visitor
+
+| Free (every visitor) | Premium (optional upgrade) |
+|---|---|
+| Sites, maps, verified listings, ratings, weather, SOS and safety notices — **safety is always free** | Ask Gondar AI chat, plus the Premium extras from the proposal |
+
+Visitors request Premium in the app; an admin approves it in **Users & Roles**.
+See [docs/PROPOSAL_CHECK.md](docs/PROPOSAL_CHECK.md) for setup and what is still missing.
 
 ## For the team
 

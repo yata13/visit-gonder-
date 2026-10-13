@@ -16,7 +16,8 @@ export type ListingType =
   | "sites"
   | "places"
   | "events"
-  | "posts";
+  | "posts"
+  | "ai_knowledge";
 
 export type FieldDef =
   | { kind: "text"; name: string; label: string; hint?: string }
@@ -513,6 +514,73 @@ const posts: ListingConfig = {
   ],
 };
 
+/** City-approved facts for the Ask Gondar AI. Only published rows reach the AI. */
+const ai_knowledge: ListingConfig = {
+  table: "ai_knowledge",
+  title: "AI Knowledge",
+  singular: "answer",
+  searchColumn: "title",
+  schema: z.object({
+    title: z.string().min(1, "English question / topic is required"),
+    title_am: z.string(),
+    body: z.string().min(1, "English answer is required"),
+    body_am: z.string(),
+    category: z.string(),
+    publish_status: publishEnum,
+  }),
+  fields: [
+    {
+      kind: "bilingual",
+      nameEn: "title",
+      nameAm: "title_am",
+      label: "Question or topic",
+    },
+    {
+      kind: "bilingual",
+      nameEn: "body",
+      nameAm: "body_am",
+      label: "Approved answer",
+      textarea: true,
+    },
+    {
+      kind: "text",
+      name: "category",
+      label: "Category",
+      hint: "e.g. opening hours, transport, Timket, prices",
+    },
+    {
+      ...publishField,
+      options: [
+        { value: "draft", label: "Draft (AI does not use it)" },
+        { value: "pending", label: "Pending review" },
+        { value: "published", label: "Published (AI may use it)" },
+      ],
+    } as FieldDef,
+  ],
+  fromRow: (r) => ({
+    title: s(r?.title),
+    title_am: s(r?.title_am),
+    body: s(r?.body),
+    body_am: s(r?.body_am),
+    category: s(r?.category) || "general",
+    publish_status: r?.publish_status ?? "draft",
+  }),
+  toPayload: (v) => ({
+    title: txt(v.title) ?? "",
+    title_am: txt(v.title_am),
+    body: txt(v.body),
+    body_am: txt(v.body_am),
+    category: txt(v.category),
+    publish_status: v.publish_status,
+  }),
+  columns: [
+    { key: "title", header: "Question / topic", render: (r) => nameCell(r.title, r.title_am) },
+    { key: "category", header: "Category", render: (r) => s(r.category) || "—" },
+    statusColumn,
+    createdColumn,
+  ],
+};
+
 export const LISTINGS: Record<ListingType, ListingConfig> = {
   hotels,
   guides,
@@ -520,6 +588,7 @@ export const LISTINGS: Record<ListingType, ListingConfig> = {
   places,
   events,
   posts,
+  ai_knowledge,
 };
 
 export function isListingType(value: string | undefined): value is ListingType {

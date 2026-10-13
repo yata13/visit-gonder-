@@ -8,6 +8,7 @@ This folder is the single source of truth for its schema.
 | Folder | What it is |
 |---|---|
 | `migrations/` | ✅ **The source of truth.** Numbered SQL migrations — every schema change lives here |
+| `functions/` | Edge functions. `ask-gondar` = the Ask Gondar / Ask the City AI (deploy: `supabase functions deploy ask-gondar`, needs the `ANTHROPIC_API_KEY` secret) |
 | `legacy/` | 🗃️ Old hand-run scripts, already applied to the live DB. History only — do **not** run |
 | `audit/` | Security audit of the database (RLS report + attacker-simulation script) |
 | `tests/` | SQL tests you can run in the SQL Editor (they roll back, change nothing) |

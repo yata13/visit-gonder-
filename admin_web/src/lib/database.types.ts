@@ -423,6 +423,126 @@ export interface Database {
         };
         Relationships: [];
       };
+      user_tiers: {
+        Row: {
+          user_id: string;
+          tier: string;
+          premium_until: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          user_id: string;
+          tier?: string;
+          premium_until?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          tier?: string;
+          premium_until?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
+      premium_requests: {
+        Row: {
+          id: string;
+          user_id: string;
+          email: string | null;
+          note: string | null;
+          status: string;
+          created_at: string;
+          handled_at: string | null;
+          handled_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          email?: string | null;
+          note?: string | null;
+          status?: string;
+          created_at?: string;
+          handled_at?: string | null;
+          handled_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          email?: string | null;
+          note?: string | null;
+          status?: string;
+          created_at?: string;
+          handled_at?: string | null;
+          handled_by?: string | null;
+        };
+        Relationships: [];
+      };
+      ai_knowledge: {
+        Row: {
+          id: string;
+          title: string;
+          title_am: string | null;
+          body: string | null;
+          body_am: string | null;
+          category: string | null;
+          publish_status: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          title_am?: string | null;
+          body?: string | null;
+          body_am?: string | null;
+          category?: string | null;
+          publish_status?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          title_am?: string | null;
+          body?: string | null;
+          body_am?: string | null;
+          category?: string | null;
+          publish_status?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ai_questions: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          mode: string;
+          lang: string | null;
+          question: string;
+          answer: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          mode?: string;
+          lang?: string | null;
+          question: string;
+          answer?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          mode?: string;
+          lang?: string | null;
+          question?: string;
+          answer?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       commission_rates: {
         Row: {
           target_type: string;
@@ -811,6 +931,14 @@ export interface Database {
       is_editor: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
+      };
+      is_premium: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      admin_set_user_tier: {
+        Args: { p_user_id: string; p_tier: string; p_until?: string | null };
+        Returns: undefined;
       };
       passport_check_in: {
         Args: { p_qr_token: string };
