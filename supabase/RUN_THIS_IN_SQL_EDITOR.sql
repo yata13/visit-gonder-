@@ -1,14 +1,14 @@
 
 -- ─────────────────────────  combined_header.sql  ─────────────────────────
--- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
---  VISIT GONDAR â€” ONE-PASTE DATABASE UPGRADE          (2026-07-21)
+-- ════════════════════════════════════════════════════════════════════
+--  VISIT GONDAR — ONE-PASTE DATABASE UPGRADE          (2026-10-15)
 --
 --  HOW TO RUN (one time, ~30 seconds):
---    Supabase Dashboard â†’ SQL Editor â†’ paste this WHOLE file â†’ Run
+--    Supabase Dashboard → SQL Editor → paste this WHOLE file → Run
 --
 --  Your project was paused and resumed. Checking it live showed the
---  database only has the old hand-run scripts â€” the migrations in
---  supabase/migrations/ (0001â€“0011) were never applied. Because of
+--  database only has the old hand-run scripts — the migrations in
+--  supabase/migrations/ (0001–0011) were never applied. Because of
 --  that, the tourist app's booking button is broken (it calls the
 --  create_booking function, which does not exist yet) and the new
 --  admin dashboard cannot manage roles, availability, deposits or
@@ -16,19 +16,22 @@
 --
 --  This file is simply, in order:
 --    1. sites lat/lng            (from legacy/SITES_COORDS.sql)
---    2. migrations 0001 â†’ 0011   (copied word for word)
---    3. grant the admin role to admin@visitgondar.com / sefedstudio@gmail.com
+--    2. migrations 0001 → 0014   (copied word for word)
+--    3. the demo login the app pre-fills (seed_demo_user.sql):
+--         demo@visitgondar.com / Demo1234!
+--    4. grant the admin role to admin@visitgondar.com / sefedstudio@gmail.com
 --       (only if that login already exists)
---    4. a small report so you can see it worked
+--    5. a small report so you can see it worked
 --
---  Safe to run more than once. The numbered files in
+--  Safe to run more than once. It never deletes your data (no DROP
+--  TABLE, no reset) — re-running just re-applies anything missing. The numbered files in
 --  supabase/migrations/ stay the source of truth.
--- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+-- ════════════════════════════════════════════════════════════════════
 
 
 -- ─────────────────────────  SITES_COORDS.sql  ─────────────────────────
 -- ============================================================
---  SITE MAP PINS â€” adds lat/lng to sites and sets the real
+--  SITE MAP PINS — adds lat/lng to sites and sets the real
 --  coordinates, so the app map shows correct locations.
 --  Run once in the Supabase SQL Editor. Safe to re-run.
 -- ============================================================
@@ -39,7 +42,7 @@ UPDATE sites SET lat = 12.604300, lng = 37.470000 WHERE name_en ILIKE '%fasil gh
 UPDATE sites SET lat = 12.613600, lng = 37.476200 WHERE name_en ILIKE '%debre berhan%';
 UPDATE sites SET lat = 12.606200, lng = 37.464800 WHERE name_en ILIKE '%bath%';
 UPDATE sites SET lat = 12.615500, lng = 37.459800 WHERE name_en ILIKE '%kusquam%' OR name_en ILIKE '%kuskuam%';
--- Simien Mountains are ~100km away â€” outside the city map, no pin.
+-- Simien Mountains are ~100km away — outside the city map, no pin.
 
 SELECT name_en, lat, lng FROM sites ORDER BY name_en;
 
@@ -49,7 +52,7 @@ SELECT name_en, lat, lng FROM sites ORDER BY name_en;
 -- 0001  Admin role plumbing (never trust a client-writable column)
 --
 -- Why: the live `users` table has no role column, and even if it did,
--- clients can UPDATE their own row â€” so a self-set role would be a
+-- clients can UPDATE their own row — so a self-set role would be a
 -- privilege-escalation hole. Roles live in a separate table that has
 -- NO client write policy, and are read only through SECURITY DEFINER
 -- helpers used by every admin RLS policy.
@@ -57,7 +60,7 @@ SELECT name_en, lat, lng FROM sites ORDER BY name_en;
 -- Idempotent: safe to run more than once.
 -- ============================================================
 
--- â”€â”€ Role assignments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── Role assignments ────────────────────────────────────────
 create table if not exists public.user_roles (
   user_id    uuid primary key references auth.users(id) on delete cascade,
   role       text not null check (role in ('admin','editor')),
@@ -71,7 +74,7 @@ comment on table public.user_roles is
 alter table public.user_roles enable row level security;
 
 -- A signed-in user may see their OWN role (so the admin app can gate
--- its UI). Nobody can INSERT/UPDATE/DELETE from a client â€” no such
+-- its UI). Nobody can INSERT/UPDATE/DELETE from a client — no such
 -- policy exists, so RLS denies all writes for anon/authenticated.
 drop policy if exists user_roles_select_own on public.user_roles;
 create policy user_roles_select_own
@@ -82,7 +85,7 @@ create policy user_roles_select_own
 -- client grant itself a role. Assignments are done by the service role.
 revoke insert, update, delete on public.user_roles from anon, authenticated;
 
--- â”€â”€ Helpers (SECURITY DEFINER so RLS on user_roles can't hide the row
+-- ── Helpers (SECURITY DEFINER so RLS on user_roles can't hide the row
 --    from the very check that needs it). Fixed search_path for safety.
 create or replace function public.is_admin()
 returns boolean
@@ -114,7 +117,7 @@ comment on function public.is_admin()  is 'True if the caller has the admin role
 comment on function public.is_editor() is 'True if the caller has admin OR editor role. Use in content RLS policies.';
 
 -- Callable by logged-in users (return false for anon). Never let anyone
--- run them as a way to enumerate â€” they only ever look at auth.uid().
+-- run them as a way to enumerate — they only ever look at auth.uid().
 revoke all on function public.is_admin()  from public;
 revoke all on function public.is_editor() from public;
 grant execute on function public.is_admin()  to authenticated, anon;
@@ -123,13 +126,13 @@ grant execute on function public.is_editor() to authenticated, anon;
 
 -- ─────────────────────────  0002_commission_rates.sql  ─────────────────────────
 -- ============================================================
--- 0002  commission_rates â€” single source of truth for rates
+-- 0002  commission_rates — single source of truth for rates
 --
 -- Why: rates were duplicated in two SQL files (3% vs 10% conflict) and
 -- hard-coded in Dart. Canonical rates are hotels 3% / guides 10% (this
 -- matches the live app and RUN_THIS_IN_SUPABASE.sql; supabase_update.sql
 -- was wrong and is archived under supabase/legacy/). The create_booking
--- RPC (0004) reads the rate from here â€” never from the client.
+-- RPC (0004) reads the rate from here — never from the client.
 --
 -- Idempotent.
 -- ============================================================
@@ -186,7 +189,7 @@ create policy commission_rates_admin_write
 -- 0003  Enable RLS + policies on all tables except bookings
 --       (bookings + its RPC are handled in 0004).
 --
--- Why: today RLS is effectively OFF DB-wide â€” with the public anon key
+-- Why: today RLS is effectively OFF DB-wide — with the public anon key
 -- anyone can read all PII and UPDATE/DELETE every table. Enabling RLS
 -- flips the default to deny; the policies below re-open exactly what the
 -- app legitimately needs and nothing more.
@@ -201,10 +204,10 @@ create policy commission_rates_admin_write
 -- policy + an "editor manages" FOR ALL policy => SELECT stays public,
 -- while INSERT/UPDATE/DELETE require editor/admin.
 
--- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
--- users â€” PII. Own row only; admins may read all (Phase 3).
+-- ─────────────────────────────────────────────────────────────
+-- users — PII. Own row only; admins may read all (Phase 3).
 -- Role is NOT stored here, so it can never be self-escalated.
--- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─────────────────────────────────────────────────────────────
 alter table public.users enable row level security;
 
 drop policy if exists users_select_own_or_admin on public.users;
@@ -224,10 +227,10 @@ create policy users_update_own
   with check (id = auth.uid());
 -- No DELETE policy: clients cannot delete user rows.
 
--- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
--- emergency_requests â€” PII incl. live GPS. Own insert + own read;
+-- ─────────────────────────────────────────────────────────────
+-- emergency_requests — PII incl. live GPS. Own insert + own read;
 -- admins read (read-only audited view in Phase 3). No client edits.
--- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─────────────────────────────────────────────────────────────
 alter table public.emergency_requests enable row level security;
 
 drop policy if exists er_insert_own on public.emergency_requests;
@@ -241,12 +244,12 @@ create policy er_select_own_or_admin
   using (user_id = auth.uid() or public.is_admin());
 -- No UPDATE/DELETE policy: emergency logs are immutable to clients.
 
--- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
--- Content tables â€” public read; editor/admin write.
+-- ─────────────────────────────────────────────────────────────
+-- Content tables — public read; editor/admin write.
 -- sites & places have no publish_status yet (added in Phase 2, which
 -- will tighten these SELECTs to published-only). hotels & guides do,
 -- so drafts are hidden from clients right now.
--- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─────────────────────────────────────────────────────────────
 
 -- sites
 alter table public.sites enable row level security;
@@ -264,7 +267,7 @@ drop policy if exists places_editor_write on public.places;
 create policy places_editor_write on public.places for all
   using (public.is_editor()) with check (public.is_editor());
 
--- hotels (publish_status exists â†’ hide drafts from clients)
+-- hotels (publish_status exists → hide drafts from clients)
 alter table public.hotels enable row level security;
 drop policy if exists hotels_select_published on public.hotels;
 create policy hotels_select_published on public.hotels for select
@@ -273,7 +276,7 @@ drop policy if exists hotels_editor_write on public.hotels;
 create policy hotels_editor_write on public.hotels for all
   using (public.is_editor()) with check (public.is_editor());
 
--- guides (publish_status exists â†’ hide drafts from clients)
+-- guides (publish_status exists → hide drafts from clients)
 alter table public.guides enable row level security;
 drop policy if exists guides_select_published on public.guides;
 create policy guides_select_published on public.guides for select
@@ -314,10 +317,10 @@ drop policy if exists danger_zones_editor_write on public.danger_zones;
 create policy danger_zones_editor_write on public.danger_zones for all
   using (public.is_editor()) with check (public.is_editor());
 
--- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
--- reviews â€” exists but unused by the client today. Lock it: public
+-- ─────────────────────────────────────────────────────────────
+-- reviews — exists but unused by the client today. Lock it: public
 -- read, editor/admin write (revisit if a user-review flow is built).
--- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─────────────────────────────────────────────────────────────
 alter table public.reviews enable row level security;
 drop policy if exists reviews_select_public on public.reviews;
 create policy reviews_select_public on public.reviews for select using (true);
@@ -325,12 +328,12 @@ drop policy if exists reviews_editor_write on public.reviews;
 create policy reviews_editor_write on public.reviews for all
   using (public.is_editor()) with check (public.is_editor());
 
--- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
--- commissions â€” financial ledger. RLS ON, ZERO policies => no client
+-- ─────────────────────────────────────────────────────────────
+-- commissions — financial ledger. RLS ON, ZERO policies => no client
 -- (anon/authenticated) access whatsoever. Written only by the
 -- SECURITY DEFINER create_booking RPC; read only by service role / admin
 -- tooling that bypasses RLS.
--- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─────────────────────────────────────────────────────────────
 create table if not exists public.commissions (
   id                uuid primary key default gen_random_uuid(),
   booking_id        uuid not null references public.bookings(id) on delete cascade,
@@ -360,13 +363,13 @@ revoke all on public.commissions from anon, authenticated;
 -- Why: today the client computes price & commission and INSERTs them
 -- directly, and anon can UPDATE/DELETE any booking. This makes price and
 -- commission server-authoritative (read from hotels/guides + commission_rates),
--- enforces validation, and removes all direct client writes â€” bookings are
+-- enforces validation, and removes all direct client writes — bookings are
 -- created only via create_booking() and cancelled only via cancel_my_booking().
 --
 -- Column names match the LIVE schema. Idempotent.
 -- ============================================================
 
--- â”€â”€ Columns needed for server-side pricing / ownership â”€â”€â”€â”€â”€â”€
+-- ── Columns needed for server-side pricing / ownership ──────
 -- (booking_date already exists and is kept in sync with check_in for the
 --  existing "My Bookings" UI.)
 alter table public.bookings add column if not exists user_id   uuid references auth.users(id);
@@ -378,7 +381,7 @@ alter table public.bookings add column if not exists guests    int default 1;
 create index if not exists bookings_user_id_idx    on public.bookings(user_id);
 create index if not exists bookings_user_email_idx on public.bookings(user_email);
 
--- â”€â”€ RLS: read your own; no client writes at all â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── RLS: read your own; no client writes at all ─────────────
 alter table public.bookings enable row level security;
 
 drop policy if exists bookings_select_own on public.bookings;
@@ -395,7 +398,7 @@ create policy bookings_select_own
 -- future stray policy can't accidentally re-open direct writes.
 revoke insert, update, delete on public.bookings from anon, authenticated;
 
--- â”€â”€ create_booking : the only way a client makes a booking â”€â”€
+-- ── create_booking : the only way a client makes a booking ──
 create or replace function public.create_booking(
   p_item_type        text,          -- 'hotel' | 'guide'
   p_item_id          uuid,          -- which hotel/guide
@@ -426,7 +429,7 @@ begin
     raise exception 'You must be signed in to book.' using errcode = '28000';
   end if;
 
-  -- â”€â”€ validation â”€â”€
+  -- ── validation ──
   if p_item_type not in ('hotel','guide') then
     raise exception 'Invalid booking type.' using errcode = '22023';
   end if;
@@ -447,7 +450,7 @@ begin
     raise exception 'Name and contact are required.' using errcode = '22023';
   end if;
 
-  -- â”€â”€ server-side price + published check (never trust the client) â”€â”€
+  -- ── server-side price + published check (never trust the client) ──
   if p_item_type = 'hotel' then
     select price, name_en, coalesce(publish_status,'published')
       into v_price, v_name, v_pub
@@ -507,7 +510,7 @@ comment on function public.create_booking(text,uuid,date,date,int,text,text) is
 revoke all on function public.create_booking(text,uuid,date,date,int,text,text) from public, anon;
 grant execute on function public.create_booking(text,uuid,date,date,int,text,text) to authenticated;
 
--- â”€â”€ cancel_my_booking : a user cancels their OWN pending booking â”€â”€
+-- ── cancel_my_booking : a user cancels their OWN pending booking ──
 create or replace function public.cancel_my_booking(p_booking_id uuid)
 returns public.bookings
 language plpgsql
@@ -610,7 +613,7 @@ create policy listing_images_editor_delete
 -- ============================================================
 -- 0006  publish_status on ALL content tables (Phase 2)
 --
--- Why: the admin needs a draft â†’ pending â†’ published workflow on
+-- Why: the admin needs a draft → pending → published workflow on
 -- every listing type. hotels & guides already have publish_status;
 -- sites, places, events and posts do not. New columns default to
 -- 'published' so every row the tourist app shows today stays visible.
@@ -635,12 +638,12 @@ update public.places set publish_status = 'published' where publish_status is nu
 update public.events set publish_status = 'published' where publish_status is null;
 update public.posts  set publish_status = 'published' where publish_status is null;
 
-comment on column public.sites.publish_status  is 'draft | pending | published â€” only published rows are shown to the public.';
-comment on column public.places.publish_status is 'draft | pending | published â€” only published rows are shown to the public.';
-comment on column public.events.publish_status is 'draft | pending | published â€” only published rows are shown to the public.';
-comment on column public.posts.publish_status  is 'draft | pending | published â€” only published rows are shown to the public.';
+comment on column public.sites.publish_status  is 'draft | pending | published — only published rows are shown to the public.';
+comment on column public.places.publish_status is 'draft | pending | published — only published rows are shown to the public.';
+comment on column public.events.publish_status is 'draft | pending | published — only published rows are shown to the public.';
+comment on column public.posts.publish_status  is 'draft | pending | published — only published rows are shown to the public.';
 
--- â”€â”€ Tighten public SELECT to published-only (editors see all) â”€â”€
+-- ── Tighten public SELECT to published-only (editors see all) ──
 -- sites
 drop policy if exists sites_select_public    on public.sites;
 drop policy if exists sites_select_published on public.sites;
@@ -678,7 +681,7 @@ create policy posts_select_published
 -- The admin needs to see who owns each listing and how to reach
 -- them. hotels already have a contact column; guides do not.
 -- owner_id links a listing to the auth account of the business
--- owner (nullable â€” many listings are city-managed).
+-- owner (nullable — many listings are city-managed).
 --
 -- Note: an owner self-service portal (owners editing their own
 -- listing) is a later phase; no owner RLS policies are added here.
@@ -700,7 +703,7 @@ create index if not exists guides_owner_id_idx on public.guides(owner_id);
 
 -- ─────────────────────────  0008_availability.sql  ─────────────────────────
 -- ============================================================
--- 0008  availability â€” per-day capacity for hotels & guides
+-- 0008  availability — per-day capacity for hotels & guides
 --
 -- Why: the platform has no availability model. This is the simple
 -- v1: one row per business per day. capacity = how many bookings
@@ -751,7 +754,7 @@ create trigger trg_touch_availability
   before update on public.availability
   for each row execute function public.touch_availability();
 
--- â”€â”€ RLS: public read, editor/admin write â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── RLS: public read, editor/admin write ─────────────────────
 alter table public.availability enable row level security;
 
 drop policy if exists availability_select_public on public.availability;
@@ -768,7 +771,7 @@ create policy availability_editor_write
 
 -- ─────────────────────────  0009_chapa_deposits.sql  ─────────────────────────
 -- ============================================================
--- 0009  Chapa deposits â€” payment tracking on bookings
+-- 0009  Chapa deposits — payment tracking on bookings
 --
 -- Why: the project is moving from pure commission to Chapa-based
 -- deposits. A tourist pays a deposit through Chapa to confirm a
@@ -784,18 +787,18 @@ create policy availability_editor_write
 -- Idempotent.
 -- ============================================================
 
--- â”€â”€ bookings: payment fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── bookings: payment fields ─────────────────────────────────
 alter table public.bookings add column if not exists payment_status text not null default 'unpaid';
 alter table public.bookings add column if not exists deposit_amount numeric(10,2);
 
 comment on column public.bookings.payment_status is
-  'unpaid | deposit_pending | deposit_paid | refunded â€” set by the Chapa webhook, never by clients.';
+  'unpaid | deposit_pending | deposit_paid | refunded — set by the Chapa webhook, never by clients.';
 comment on column public.bookings.deposit_amount is
   'Deposit required to confirm this booking, in ETB.';
 
 create index if not exists bookings_payment_status_idx on public.bookings(payment_status);
 
--- â”€â”€ deposits: one row per Chapa transaction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── deposits: one row per Chapa transaction ──────────────────
 create table if not exists public.deposits (
   id           uuid primary key default gen_random_uuid(),
   booking_id   uuid not null references public.bookings(id) on delete cascade,
@@ -831,7 +834,7 @@ create trigger trg_touch_deposits
   before update on public.deposits
   for each row execute function public.touch_deposits();
 
--- â”€â”€ RLS: read own (via the booking) or admin; NO client writes â”€â”€
+-- ── RLS: read own (via the booking) or admin; NO client writes ──
 alter table public.deposits enable row level security;
 
 drop policy if exists deposits_select_own_or_admin on public.deposits;
@@ -854,7 +857,7 @@ revoke insert, update, delete on public.deposits from anon, authenticated;
 
 -- ─────────────────────────  0010_gondar_passport.sql  ─────────────────────────
 -- ============================================================
--- 0010  Gondar Passport â€” check-in points, stories, trivia
+-- 0010  Gondar Passport — check-in points, stories, trivia
 --
 -- The Gondar Passport is a gamified city tour: tourists scan a QR
 -- code (or use GPS) at heritage checkpoints, collect points, and
@@ -862,7 +865,7 @@ revoke insert, update, delete on public.deposits from anon, authenticated;
 --
 -- Tables:
 --   passport_checkpoints         public content (no secret inside)
---   passport_checkpoint_secrets  the QR token â€” editors/admins only
+--   passport_checkpoint_secrets  the QR token — editors/admins only
 --   passport_stories             unlocked at a checkpoint
 --   passport_trivia              quiz questions per checkpoint
 --   passport_checkins            one row per user per checkpoint
@@ -878,7 +881,7 @@ revoke insert, update, delete on public.deposits from anon, authenticated;
 -- Idempotent.
 -- ============================================================
 
--- â”€â”€ Checkpoints (public content) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── Checkpoints (public content) ─────────────────────────────
 create table if not exists public.passport_checkpoints (
   id             uuid primary key default gen_random_uuid(),
   name_en        text not null,
@@ -897,7 +900,7 @@ create table if not exists public.passport_checkpoints (
 comment on table public.passport_checkpoints is
   'Gondar Passport check-in points. QR tokens live in passport_checkpoint_secrets, never here.';
 
--- â”€â”€ QR secrets (editors/admins only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── QR secrets (editors/admins only) ─────────────────────────
 create table if not exists public.passport_checkpoint_secrets (
   checkpoint_id uuid primary key references public.passport_checkpoints(id) on delete cascade,
   qr_token      text not null unique default replace(gen_random_uuid()::text, '-', ''),
@@ -932,7 +935,7 @@ insert into public.passport_checkpoint_secrets (checkpoint_id)
 select id from public.passport_checkpoints
 on conflict (checkpoint_id) do nothing;
 
--- â”€â”€ Stories â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── Stories ──────────────────────────────────────────────────
 create table if not exists public.passport_stories (
   id            uuid primary key default gen_random_uuid(),
   checkpoint_id uuid not null references public.passport_checkpoints(id) on delete cascade,
@@ -949,7 +952,7 @@ create table if not exists public.passport_stories (
 create index if not exists passport_stories_checkpoint_idx
   on public.passport_stories(checkpoint_id);
 
--- â”€â”€ Trivia â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── Trivia ───────────────────────────────────────────────────
 create table if not exists public.passport_trivia (
   id            uuid primary key default gen_random_uuid(),
   checkpoint_id uuid not null references public.passport_checkpoints(id) on delete cascade,
@@ -966,7 +969,7 @@ create table if not exists public.passport_trivia (
 create index if not exists passport_trivia_checkpoint_idx
   on public.passport_trivia(checkpoint_id);
 
--- â”€â”€ Check-ins â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── Check-ins ────────────────────────────────────────────────
 create table if not exists public.passport_checkins (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null references auth.users(id) on delete cascade,
@@ -981,7 +984,7 @@ create index if not exists passport_checkins_user_idx
 create index if not exists passport_checkins_checkpoint_idx
   on public.passport_checkins(checkpoint_id);
 
--- â”€â”€ RLS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── RLS ──────────────────────────────────────────────────────
 alter table public.passport_checkpoints        enable row level security;
 alter table public.passport_checkpoint_secrets enable row level security;
 alter table public.passport_stories            enable row level security;
@@ -1036,7 +1039,7 @@ create policy passport_checkins_select_own_or_admin
 
 revoke insert, update, delete on public.passport_checkins from anon, authenticated;
 
--- â”€â”€ passport_check_in : the only way a tourist checks in â”€â”€â”€â”€â”€
+-- ── passport_check_in : the only way a tourist checks in ─────
 create or replace function public.passport_check_in(p_qr_token text)
 returns jsonb
 language plpgsql
@@ -1084,7 +1087,7 @@ comment on function public.passport_check_in(text) is
 revoke all on function public.passport_check_in(text) from public, anon;
 grant execute on function public.passport_check_in(text) to authenticated;
 
--- â”€â”€ admin_rotate_checkpoint_qr : editors invalidate a leaked QR â”€â”€
+-- ── admin_rotate_checkpoint_qr : editors invalidate a leaked QR ──
 create or replace function public.admin_rotate_checkpoint_qr(p_checkpoint_id uuid)
 returns text
 language plpgsql
@@ -1124,12 +1127,12 @@ grant execute on function public.admin_rotate_checkpoint_qr(uuid) to authenticat
 -- 0011  Users & roles for the admin dashboard
 --
 -- Why: the admin needs to (a) list all users with their email,
--- (b) see everyone's role, (c) grant/revoke roles â€” all with the
+-- (b) see everyone's role, (c) grant/revoke roles — all with the
 -- anon key, which today is impossible: user_roles only shows your
 -- own row and is never client-writable (by design, see 0001).
 --
 -- This keeps that design: roles still live in user_roles, writes
--- still never come from a plain client â€” they go through
+-- still never come from a plain client — they go through
 -- SECURITY DEFINER RPCs that check is_admin() themselves.
 --
 -- Also: public.users gets an email column, auto-filled on signup
@@ -1139,7 +1142,7 @@ grant execute on function public.admin_rotate_checkpoint_qr(uuid) to authenticat
 -- Idempotent.
 -- ============================================================
 
--- â”€â”€ users.email + signup trigger â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── users.email + signup trigger ─────────────────────────────
 alter table public.users add column if not exists email      text;
 alter table public.users add column if not exists created_at timestamptz default now();
 
@@ -1179,13 +1182,13 @@ update public.users u
  where au.id = u.id
    and u.email is null;
 
--- â”€â”€ Admins can list every role â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── Admins can list every role ───────────────────────────────
 drop policy if exists user_roles_select_admin on public.user_roles;
 create policy user_roles_select_admin
   on public.user_roles for select
   using (public.is_admin());
 
--- â”€â”€ admin_grant_role / admin_revoke_role â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── admin_grant_role / admin_revoke_role ─────────────────────
 create or replace function public.admin_grant_role(p_user_id uuid, p_role text)
 returns void
 language plpgsql
@@ -1247,14 +1250,14 @@ grant execute on function public.admin_revoke_role(uuid)      to authenticated;
 -- Why: 0003/0004 made bookings and emergency_requests immutable to
 -- clients (all writes revoked). The admin dashboard still needs the
 -- old admin's actions: approve/reject a booking, move an SOS request
--- through pending â†’ responding â†’ resolved, and clean up old requests.
--- These SECURITY DEFINER functions are the controlled path â€” they
+-- through pending → responding → resolved, and clean up old requests.
+-- These SECURITY DEFINER functions are the controlled path — they
 -- check is_editor() themselves, so RLS stays locked for everyone else.
 --
 -- Idempotent.
 -- ============================================================
 
--- â”€â”€ Booking status (old admin: APPROVE / REJECT buttons) â”€â”€â”€â”€â”€
+-- ── Booking status (old admin: APPROVE / REJECT buttons) ─────
 create or replace function public.admin_set_booking_status(
   p_booking_id uuid,
   p_status     text
@@ -1282,7 +1285,7 @@ $$;
 comment on function public.admin_set_booking_status(uuid, text) is
   'Admin/editor approves, rejects, confirms or cancels a booking. The only admin write path to bookings.';
 
--- â”€â”€ Emergency status (pending â†’ responding â†’ resolved) â”€â”€â”€â”€â”€â”€â”€
+-- ── Emergency status (pending → responding → resolved) ───────
 create or replace function public.admin_set_emergency_status(
   p_id     uuid,
   p_status text
@@ -1310,7 +1313,7 @@ $$;
 comment on function public.admin_set_emergency_status(uuid, text) is
   'Admin/editor updates an SOS request status. Tourists still cannot touch these rows.';
 
--- â”€â”€ Emergency delete (old admin could remove handled requests) â”€â”€
+-- ── Emergency delete (old admin could remove handled requests) ──
 create or replace function public.admin_delete_emergency(p_id uuid)
 returns void
 language plpgsql
@@ -1331,7 +1334,7 @@ $$;
 comment on function public.admin_delete_emergency(uuid) is
   'Admin/editor removes an emergency request from the log.';
 
--- â”€â”€ Grants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── Grants ───────────────────────────────────────────────────
 revoke all on function public.admin_set_booking_status(uuid, text) from public, anon;
 revoke all on function public.admin_set_emergency_status(uuid, text) from public, anon;
 revoke all on function public.admin_delete_emergency(uuid) from public, anon;
@@ -1342,17 +1345,17 @@ grant execute on function public.admin_delete_emergency(uuid) to authenticated;
 
 -- ─────────────────────────  0013_staff_role.sql  ─────────────────────────
 -- ============================================================
--- 0013  Staff role â€” hired employees (call-center / operations)
+-- 0013  Staff role — hired employees (call-center / operations)
 --
 -- The team is hiring managers who handle tourist calls, SOS
 -- requests and bookings. A `staff` member may use everything in
 -- the admin dashboard EXCEPT:
---   * finance (commission / sales money â€” admin only in the app;
+--   * finance (commission / sales money — admin only in the app;
 --     the commissions ledger table stays fully locked to clients)
 --   * Users & Roles (admin only)
 --
 -- How: is_editor() now means "any team member" (admin, editor or
--- staff) â€” every content policy and the 0012 admin actions inherit
+-- staff) — every content policy and the 0012 admin actions inherit
 -- that automatically. Bookings and SOS lists open up to the team
 -- too, because a call-center agent must see them to work.
 -- is_admin() is unchanged: money + user management stay admin-only.
@@ -1360,7 +1363,7 @@ grant execute on function public.admin_delete_emergency(uuid) to authenticated;
 -- Idempotent.
 -- ============================================================
 
--- â”€â”€ Allow the new role value â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── Allow the new role value ─────────────────────────────────
 alter table public.user_roles drop constraint if exists user_roles_role_check;
 alter table public.user_roles
   add constraint user_roles_role_check check (role in ('admin','editor','staff'));
@@ -1368,7 +1371,7 @@ alter table public.user_roles
 comment on table public.user_roles is
   'Team roles: admin (everything), editor (content), staff (operations). Written only via admin_grant_role/admin_revoke_role.';
 
--- â”€â”€ is_editor() = any team member â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── is_editor() = any team member ────────────────────────────
 create or replace function public.is_editor()
 returns boolean
 language sql
@@ -1385,7 +1388,7 @@ $$;
 comment on function public.is_editor() is
   'True if the caller is admin, editor or staff. Gates content management and daily operations.';
 
--- â”€â”€ Team members see all bookings (needed to manage them) â”€â”€â”€â”€
+-- ── Team members see all bookings (needed to manage them) ────
 drop policy if exists bookings_select_own on public.bookings;
 create policy bookings_select_own
   on public.bookings for select
@@ -1395,13 +1398,13 @@ create policy bookings_select_own
     or public.is_editor()
   );
 
--- â”€â”€ Team members see all SOS requests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── Team members see all SOS requests ────────────────────────
 drop policy if exists er_select_own_or_admin on public.emergency_requests;
 create policy er_select_own_or_admin
   on public.emergency_requests for select
   using (user_id = auth.uid() or public.is_editor());
 
--- â”€â”€ Role management accepts the new role â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ── Role management accepts the new role ─────────────────────
 create or replace function public.admin_grant_role(p_user_id uuid, p_role text)
 returns void
 language plpgsql
@@ -1673,24 +1676,98 @@ create policy ai_questions_select
 revoke insert, update, delete on public.ai_questions from anon, authenticated;
 
 
+-- ─────────────────────────  seed_demo_user.sql  ─────────────────────────
+-- ============================================================
+-- Demo login for testing the tourist app
+--
+-- Creates (or resets) a ready-to-use, already-confirmed account:
+--     email:    demo@visitgondar.com
+--     password: Demo1234!
+-- The app's login screen is pre-filled with exactly these values.
+--
+-- Run in: Supabase Dashboard → SQL Editor → paste → Run.
+-- Safe to run again: it just resets the password and confirms it.
+-- Demo only — do NOT run this on the real production project.
+-- ============================================================
+
+create extension if not exists pgcrypto;
+
+do $$
+declare
+  v_email    text := 'demo@visitgondar.com';
+  v_password text := 'Demo1234!';
+  v_id       uuid;
+begin
+  select id into v_id from auth.users where email = v_email;
+
+  if v_id is null then
+    v_id := gen_random_uuid();
+    insert into auth.users (
+      instance_id, id, aud, role, email, encrypted_password,
+      email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+      created_at, updated_at,
+      confirmation_token, recovery_token, email_change_token_new, email_change
+    ) values (
+      '00000000-0000-0000-0000-000000000000', v_id, 'authenticated',
+      'authenticated', v_email, crypt(v_password, gen_salt('bf')),
+      now(),
+      '{"provider":"email","providers":["email"]}',
+      '{"full_name":"Demo Tourist","country":"Ethiopia"}',
+      now(), now(),
+      '', '', '', ''
+    );
+  else
+    update auth.users
+       set encrypted_password = crypt(v_password, gen_salt('bf')),
+           email_confirmed_at = coalesce(email_confirmed_at, now()),
+           banned_until       = null,
+           updated_at         = now()
+     where id = v_id;
+  end if;
+
+  -- Email/password sign-in needs a matching identity row.
+  if not exists (
+    select 1 from auth.identities
+     where user_id = v_id and provider = 'email'
+  ) then
+    insert into auth.identities (
+      id, user_id, provider_id, provider, identity_data,
+      last_sign_in_at, created_at, updated_at
+    ) values (
+      gen_random_uuid(), v_id, v_id::text, 'email',
+      jsonb_build_object('sub', v_id::text, 'email', v_email,
+                         'email_verified', true),
+      now(), now(), now()
+    );
+  end if;
+
+  -- App profile row (the signup trigger from 0011 also does this).
+  insert into public.users (id, full_name, language)
+  values (v_id, 'Demo Tourist', 'en')
+  on conflict (id) do nothing;
+
+  raise notice 'Demo user ready: % / %', v_email, v_password;
+end $$;
+
+
 -- ─────────────────────────  combined_tail.sql  ─────────────────────────
 
--- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+-- ════════════════════════════════════════════════════════════════════
 --  FINAL STEP 1: give the admin account its role.
 --  (Edit the emails below if you use a different login.)
--- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+-- ════════════════════════════════════════════════════════════════════
 insert into public.user_roles (user_id, role)
 select id, 'admin'
 from auth.users
 where email in ('admin@visitgondar.com', 'sefedstudio@gmail.com')
 on conflict (user_id) do update set role = 'admin';
 
--- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+-- ════════════════════════════════════════════════════════════════════
 --  FINAL STEP 2: the report. Read the rows this returns:
---   * "admins" must NOT say NONE â€” if it does, create the user first:
---     Dashboard â†’ Authentication â†’ Users â†’ Add user â†’ email + password,
+--   * "admins" must NOT say NONE — if it does, create the user first:
+--     Dashboard → Authentication → Users → Add user → email + password,
 --     then run this whole file again (it is safe to re-run).
--- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+-- ════════════════════════════════════════════════════════════════════
 select 'signed-up users' as what, count(*)::text as result from auth.users
 union all
 select 'admins',
@@ -1698,7 +1775,7 @@ select 'admins',
          (select string_agg(u.email || ' = ' || r.role, ', ')
             from public.user_roles r
             join auth.users u on u.id = r.user_id),
-         'NONE â€” create the admin user, then run this file again')
+         'NONE — create the admin user, then run this file again')
 union all
 select 'booking function ready',
        case when exists (select 1 from pg_proc where proname = 'create_booking')
@@ -1713,6 +1790,12 @@ union all
 select 'premium + AI tables ready',
        case when to_regclass('public.user_tiers') is not null
              and to_regclass('public.ai_knowledge') is not null
+            then 'YES' else 'NO' end
+union all
+select 'demo login (demo@visitgondar.com)',
+       case when exists (select 1 from auth.users
+                          where email = 'demo@visitgondar.com'
+                            and email_confirmed_at is not null)
             then 'YES' else 'NO' end
 union all
 select 'sites map pins', (select count(*)::text from public.sites where lat is not null);
