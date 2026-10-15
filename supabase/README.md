@@ -13,6 +13,7 @@ This folder is the single source of truth for its schema.
 | `audit/` | Security audit of the database (RLS report + attacker-simulation script) |
 | `tests/` | SQL tests you can run in the SQL Editor (they roll back, change nothing) |
 | `PHASE1_DEPLOY.md` | Step-by-step notes from the Phase-1 security deploy |
+| `seed_demo_user.sql` | Demo/testing only: creates the confirmed `demo@visitgondar.com` / `Demo1234!` login the app pre-fills |
 
 ## How to apply a migration
 

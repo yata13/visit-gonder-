@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../theme/app_theme.dart';
 import '../../services/auth_service.dart';
+import '../../services/supabase_service.dart';
 import '../../main.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
@@ -14,13 +15,22 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey  = GlobalKey<FormState>();
-  final _email    = TextEditingController();
-  final _password = TextEditingController();
+  // Demo build: pre-filled with the demo account so testers can just
+  // tap "Sign in". Change via DEMO_EMAIL / DEMO_PASSWORD in .env.
+  final _email    = TextEditingController(text: SupabaseService.demoEmail);
+  final _password = TextEditingController(text: SupabaseService.demoPassword);
   final _auth     = AuthService();
 
   bool _loading       = false;
   bool _showPassword  = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // Startup problem (no .env, bad keys, …) → say so right away.
+    _error = SupabaseService.initError;
+  }
 
   Future<void> _googleSignIn() async {
     setState(() { _loading = true; _error = null; });
@@ -47,6 +57,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!SupabaseService.isReady) {
+      setState(() => _error = SupabaseService.initError);
+      return;
+    }
     setState(() { _loading = true; _error = null; });
     try {
       await _auth.signIn(email: _email.text.trim(), password: _password.text);
@@ -56,11 +70,14 @@ class _LoginScreenState extends State<LoginScreen> {
         (_) => false,
       );
     } on AuthException catch (e) {
+      debugPrint('Login AuthException: ${e.statusCode} ${e.message}');
       setState(() => _error = e.message);
-    } catch (e) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+    } catch (e, st) {
+      // Show the real error (demo build) so we can see what is failing.
+      debugPrint('Login failed: $e\n$st');
+      setState(() => _error = 'Something went wrong: $e');
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 

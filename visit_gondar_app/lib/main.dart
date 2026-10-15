@@ -33,7 +33,9 @@ Future<void> main() async {
   try {
     await SupabaseService.initialize();
     RealtimeAlerts.start(); // live popups on every screen
-  } catch (_) {}
+  } catch (e, st) {
+    debugPrint('Startup failed: ${SupabaseService.initError ?? e}\n$st');
+  }
   runApp(const ProviderScope(child: VisitGondarApp()));
 }
 
@@ -72,7 +74,8 @@ class _LaunchDeciderState extends State<_LaunchDecider> {
 
   Future<void> _decide() async {
     // Already signed in → straight to the app.
-    if (Supabase.instance.client.auth.currentSession != null) {
+    if (SupabaseService.isReady &&
+        Supabase.instance.client.auth.currentSession != null) {
       _set(const MainNavigation());
       return;
     }

@@ -7,8 +7,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
 class AuthService {
-  final _auth = SupabaseService.client.auth;
-  final _db   = SupabaseService.client;
+  // Getters (not fields) so creating an AuthService never throws when
+  // Supabase failed to start — the error shows up on the actual call.
+  GoTrueClient   get _auth => SupabaseService.client.auth;
+  SupabaseClient get _db   => SupabaseService.client;
 
   // ── SIGN UP ─────────────────────────────────────────────
   Future<AuthResponse> signUp({

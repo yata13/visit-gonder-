@@ -87,11 +87,13 @@ class _SignupScreenState extends State<SignupScreen> {
         (_) => false,
       );
     } on AuthException catch (e) {
+      debugPrint('Sign-up AuthException: ${e.statusCode} ${e.message}');
       setState(() => _error = e.message);
-    } catch (e) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+    } catch (e, st) {
+      debugPrint('Sign-up failed: $e\n$st');
+      setState(() => _error = 'Something went wrong: $e');
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
