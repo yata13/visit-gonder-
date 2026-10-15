@@ -11,24 +11,25 @@ class SupabaseService {
   static String? initError;
   static bool get isReady => initError == null;
 
+  // Built-in project values, used when .env is missing or empty (e.g. a
+  // phone build made without the .env file). A publishable key is meant
+  // to ship inside client apps — RLS protects the data, not this key.
+  static const _defaultUrl = 'https://cukfcclewuqaebnhhamo.supabase.co';
+  static const _defaultKey = 'sb_publishable_ujn44Z6NbBDL1vJG4xq7wA_2CEuyoIH';
+
   // Initialize once in main.dart
   static Future<void> initialize() async {
     try {
       await dotenv.load(fileName: '.env');
     } catch (e) {
-      initError = 'Could not load the .env file. Copy .env.example to .env '
-          'and fill in SUPABASE_URL and SUPABASE_ANON_KEY. ($e)';
-      rethrow;
+      // No .env → fall back to the built-in values below.
     }
-    final url = dotenv.env['SUPABASE_URL'] ?? '';
-    final key = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-    if (url.isEmpty || key.isEmpty || url.contains('YOUR-PROJECT-ID')) {
-      initError = 'SUPABASE_URL / SUPABASE_ANON_KEY are missing in .env '
-          '(still the example values?).';
-      throw StateError(initError!);
-    }
+    var url = _env('SUPABASE_URL', _defaultUrl);
+    var key = _env('SUPABASE_ANON_KEY', _defaultKey);
+    if (url.contains('YOUR-PROJECT-ID')) url = _defaultUrl;
+    if (key.startsWith('your-')) key = _defaultKey;
     try {
-      await Supabase.initialize(url: url, anonKey: key);
+      await Supabase.initialize(url: url, publishableKey: key);
     } catch (e) {
       initError = 'Supabase failed to start: $e';
       rethrow;
