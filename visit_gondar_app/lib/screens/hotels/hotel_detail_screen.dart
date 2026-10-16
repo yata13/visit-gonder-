@@ -59,7 +59,7 @@ class HotelDetailScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(hotel['tag'],
-                        style: const TextStyle(fontSize: 11, color: AppColors.gold,
+                        style: const TextStyle(fontSize: 11, color: Colors.white,
                             fontWeight: FontWeight.w600)),
                   ),
                 ),
@@ -148,7 +148,7 @@ class HotelDetailScreen extends StatelessWidget {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.gold,
-                      foregroundColor: AppColors.goldDeep,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),

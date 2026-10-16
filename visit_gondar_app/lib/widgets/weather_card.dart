@@ -115,7 +115,7 @@ class WeatherChip extends StatelessWidget {
       Text(
         '${day.max.round()}° · ${WeatherService.label(day.code, am)}'
         '${day.rainChance >= 30 ? ' ${day.rainChance}%' : ''}',
-        style: const TextStyle(color: Color(0xFFB3A899), fontSize: 11.5),
+        style: const TextStyle(color: Color(0xFFB3B3B3), fontSize: 11.5),
       ),
     ]);
   }

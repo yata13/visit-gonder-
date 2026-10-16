@@ -62,7 +62,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   @override
   Widget build(BuildContext context) {
     final am = isAm(ref.watch(languageProvider));
-    final tier = ref.watch(userTierProvider).value ?? UserTier.guest;
+    final tier = ref.watch(userTierProvider).valueOrNull ?? UserTier.guest;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -137,10 +137,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
 
   ButtonStyle _btn() => FilledButton.styleFrom(
         backgroundColor: AppColors.charcoal,
-        foregroundColor: AppColors.gold,
+        foregroundColor: Colors.white,
         minimumSize: const Size.fromHeight(52),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        textStyle: AppFonts.button(15, FontWeight.w700),
       );
 
   Widget _statusBox(IconData icon, Color color, String text) => Container(
@@ -165,38 +165,38 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     required bool current,
     required bool dark,
   }) {
-    final fg = dark ? const Color(0xFFFBF7F0) : AppColors.charcoal;
+    final fg = dark ? const Color(0xFFFFFFFF) : AppColors.charcoal;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: dark ? AppColors.charcoal : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-            color: dark ? AppColors.gold : AppColors.surfaceVariant,
+            color: dark ? Colors.white : AppColors.surfaceVariant,
             width: dark ? 1.5 : 1),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Text(title, style: TextStyle(fontSize: 19,
               fontWeight: FontWeight.w800,
-              color: dark ? AppColors.gold : fg)),
+              color: dark ? Colors.white : fg)),
           if (current) ...[
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.gold.withAlpha(dark ? 60 : 30),
+                color: Colors.white.withAlpha(dark ? 60 : 30),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(am ? 'የእርስዎ እቅድ' : 'Your plan',
                   style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700,
-                      color: dark ? AppColors.gold : AppColors.goldDark)),
+                      color: dark ? Colors.white : AppColors.goldDark)),
             ),
           ],
           const Spacer(),
           Text(tag, style: TextStyle(fontSize: 10, letterSpacing: 1.2,
               fontWeight: FontWeight.w700,
-              color: dark ? AppColors.gold : AppColors.textMuted)),
+              color: dark ? Colors.white : AppColors.textMuted)),
         ]),
         const SizedBox(height: 12),
         for (final (en, amText) in items)
@@ -204,7 +204,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Icon(Icons.check_circle_rounded, size: 17,
-                  color: dark ? AppColors.gold : AppColors.green),
+                  color: dark ? Colors.white : AppColors.green),
               const SizedBox(width: 9),
               Expanded(child: Text(am ? amText : en,
                   style: TextStyle(fontSize: 13.5, color: fg, height: 1.35))),

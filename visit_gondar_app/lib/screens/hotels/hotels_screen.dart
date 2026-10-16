@@ -4,6 +4,8 @@ import '../../theme/app_theme.dart';
 import '../../providers/data_providers.dart';
 import '../../providers/language_provider.dart';
 import '../../widgets/shimmer_image.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../widgets/ui.dart';
 import '../booking/booking_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
@@ -190,7 +192,7 @@ class _HotelCard extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 13, vertical: 7),
                 decoration: BoxDecoration(
-                  color: AppColors.gold,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(11),
                 ),
                 child: RichText(text: TextSpan(children: [
@@ -201,7 +203,7 @@ class _HotelCard extends ConsumerWidget {
                   ),
                   const TextSpan(
                     text: ' /night',
-                    style: TextStyle(color: Color(0xCC1C1410), fontSize: 11),
+                    style: TextStyle(color: Color(0xCC1C1C1C), fontSize: 11),
                   ),
                 ])),
               ),
@@ -212,7 +214,7 @@ class _HotelCard extends ConsumerWidget {
                 Icons.star_rounded,
                 size: 15,
                 color: i < stars
-                    ? AppColors.gold
+                    ? Colors.white
                     : Colors.white.withAlpha(80),
               ))),
             ),
@@ -250,7 +252,7 @@ class _HotelCard extends ConsumerWidget {
                   onPressed: onTap,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.charcoal,
-                    foregroundColor: AppColors.gold,
+                    foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
@@ -303,11 +305,15 @@ class HotelDetailPage extends ConsumerWidget {
             leading: GestureDetector(
               onTap: onBack ?? () => Navigator.maybePop(context),
               child: Container(
-                margin: const EdgeInsets.all(8),
+                margin: const EdgeInsets.all(6),
                 decoration: const BoxDecoration(
-                    color: Colors.black45, shape: BoxShape.circle),
-                child: const Icon(Icons.arrow_back,
-                    color: Colors.white, size: 20),
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: Color(0x29000000),
+                      blurRadius: 8, offset: Offset(0, 2))],
+                ),
+                child: const Icon(Icons.arrow_back_rounded,
+                    color: AppColors.ink, size: 22),
               ),
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -327,9 +333,14 @@ class HotelDetailPage extends ConsumerWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                 Text(name,
-                    style: const TextStyle(fontSize: 25,
+                    style: const TextStyle(fontSize: 26,
                         fontWeight: FontWeight.w800,
                         color: AppColors.charcoal, letterSpacing: -0.4)),
+                const SizedBox(height: 8),
+                StatusTag(isAm(lang) ? 'የተረጋገጠ' : 'Verified',
+                    icon: Icons.verified_user_outlined,
+                    background: AppColors.verifiedTint,
+                    foreground: AppColors.verified),
                 const SizedBox(height: 8),
                 Row(children: [
                   ...List.generate(5, (i) => Icon(
@@ -367,13 +378,13 @@ class HotelDetailPage extends ConsumerWidget {
                     Column(crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                       Text(tr(lang, 'per_night_label'),
-                          style: const TextStyle(color: Color(0xFF8A7E70),
+                          style: const TextStyle(color: Color(0xFF8C8C8C),
                               fontSize: 12)),
                       const SizedBox(height: 2),
                       Text('\$${price.toStringAsFixed(0)}',
                           style: const TextStyle(fontSize: 28,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.gold)),
+                              color: Colors.white)),
                     ]),
                     const Spacer(),
                     SizedBox(
@@ -389,12 +400,11 @@ class HotelDetailPage extends ConsumerWidget {
                             priceLabel: 'night',
                           ))),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.gold,
-                          foregroundColor: AppColors.charcoal,
+                          backgroundColor: Colors.white,
+                          foregroundColor: AppColors.ink,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                          shape: const StadiumBorder(),
                         ),
                         child: Text(tr(lang, 'book_now'),
                             style: const TextStyle(
@@ -419,21 +429,15 @@ class HotelDetailPage extends ConsumerWidget {
                 ],
 
                 if (contact.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.surfaceVariant),
-                    ),
-                    child: Row(children: [
-                      const Icon(Icons.phone_outlined,
-                          color: AppColors.rust, size: 20),
-                      const SizedBox(width: 12),
-                      Text(contact,
-                          style: const TextStyle(fontWeight: FontWeight.w600,
-                              fontSize: 14)),
-                    ]),
+                  OutlinedButton.icon(
+                    onPressed: () => launchUrl(Uri.parse(
+                        'tel:${contact.replaceAll(' ', '')}')),
+                    style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        alignment: Alignment.centerLeft,
+                        minimumSize: const Size(double.infinity, 52)),
+                    icon: const Icon(Icons.call_outlined, size: 20),
+                    label: Text(contact),
                   ),
                   const SizedBox(height: 22),
                 ],

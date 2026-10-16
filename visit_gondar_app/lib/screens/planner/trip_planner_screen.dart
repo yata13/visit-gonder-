@@ -118,7 +118,7 @@ class _TripPlannerScreenState extends ConsumerState<TripPlannerScreen> {
                 ),
                 child: Center(child: Text('$d',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800,
-                        color: sel ? AppColors.gold : AppColors.charcoal))),
+                        color: sel ? Colors.white : AppColors.charcoal))),
               ),
             ),
           );
@@ -186,7 +186,7 @@ class _TripPlannerScreenState extends ConsumerState<TripPlannerScreen> {
                     fontSize: 16)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.gold,
-              foregroundColor: AppColors.charcoal,
+              foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
@@ -218,10 +218,10 @@ class _TripPlannerScreenState extends ConsumerState<TripPlannerScreen> {
           child: Column(children: [
             Text(marks, style: TextStyle(fontSize: 15,
                 fontWeight: FontWeight.w800,
-                color: sel ? AppColors.gold : AppColors.charcoal)),
+                color: sel ? Colors.white : AppColors.charcoal)),
             const SizedBox(height: 2),
             Text(label, style: TextStyle(fontSize: 11.5,
-                color: sel ? const Color(0xFFD8CDBC) : AppColors.textMuted)),
+                color: sel ? const Color(0xFFCCCCCC) : AppColors.textMuted)),
           ]),
         ),
       ),
@@ -245,11 +245,11 @@ class _PlanResult extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final am = isAm(lang);
-    final sites = [...(ref.watch(sitesProvider).value ?? const [])];
-    final hotels = [...(ref.watch(hotelsProvider).value ?? const [])];
-    final guides = [...(ref.watch(guidesProvider).value ?? const [])];
+    final sites = [...(ref.watch(sitesProvider).valueOrNull ?? const [])];
+    final hotels = [...(ref.watch(hotelsProvider).valueOrNull ?? const [])];
+    final guides = [...(ref.watch(guidesProvider).valueOrNull ?? const [])];
     // The plan starts today; days inside the 7-day window get a forecast.
-    final weather = ref.watch(weatherProvider).value;
+    final weather = ref.watch(weatherProvider).valueOrNull;
 
     // Pick a hotel by budget.
     hotels.sort((a, b) => hotelPrice(a).compareTo(hotelPrice(b)));
@@ -296,23 +296,23 @@ class _PlanResult extends ConsumerWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF2A1D14), AppColors.charcoal]),
+              colors: [Color(0xFF232323), AppColors.charcoal]),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start,
               children: [
             Row(children: [
-              const Icon(Icons.auto_awesome, color: AppColors.gold, size: 20),
+              const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
               const SizedBox(width: 8),
               Text(am ? 'የእርስዎ የጎንደር እቅድ' : 'Your Gondar Plan',
-                  style: const TextStyle(color: Color(0xFFFBF7F0),
+                  style: const TextStyle(color: Color(0xFFFFFFFF),
                       fontSize: 18, fontWeight: FontWeight.w800)),
             ]),
             const SizedBox(height: 6),
             Text(
               '$days ${am ? 'ቀን' : (days == 1 ? 'day' : 'days')} · '
               '${budget == 'budget' ? (am ? 'ቆጣቢ' : 'Budget') : budget == 'luxury' ? (am ? 'የቅንጦት' : 'Luxury') : (am ? 'መካከለኛ' : 'Mid-range')}',
-              style: const TextStyle(color: Color(0xFFB3A899), fontSize: 13),
+              style: const TextStyle(color: Color(0xFFB3B3B3), fontSize: 13),
             ),
           ]),
         ),
@@ -406,14 +406,14 @@ class _PlanResult extends ConsumerWidget {
           ),
           child: Row(children: [
             Text('${am ? 'ቀን' : 'Day'} $day',
-                style: const TextStyle(color: AppColors.gold,
+                style: const TextStyle(color: Colors.white,
                     fontWeight: FontWeight.w800, fontSize: 15)),
             const Spacer(),
             if (weather != null)
               WeatherChip(day: weather, am: am)
             else if (day == 1)
               Text(am ? 'መድረስ እና ማረፊያ' : 'Arrive & settle in',
-                  style: const TextStyle(color: Color(0xFFB3A899),
+                  style: const TextStyle(color: Color(0xFFB3B3B3),
                       fontSize: 11.5)),
           ]),
         ),

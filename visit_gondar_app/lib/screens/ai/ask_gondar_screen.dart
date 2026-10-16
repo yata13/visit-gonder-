@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/tier_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/ui.dart';
 import '../premium/premium_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
@@ -11,31 +12,146 @@ import '../premium/premium_screen.dart';
 //  Chat in Amharic or English. The `ask-gondar` edge function
 //  answers ONLY from City-approved data; if it is not sure it
 //  says so and gives the Safety Desk number.
+//  Layout follows the design "Ask AI · chat home / chat".
 // ═══════════════════════════════════════════════════════════════
-class AskGondarScreen extends ConsumerWidget {
+class AskGondarScreen extends ConsumerStatefulWidget {
   const AskGondarScreen({super.key});
+  @override
+  ConsumerState<AskGondarScreen> createState() => _AskGondarScreenState();
+}
+
+class _AskGondarScreenState extends ConsumerState<AskGondarScreen> {
+  int _chatKey = 0; // bump to start a new chat
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final am = isAm(ref.watch(languageProvider));
     final tierAsync = ref.watch(userTierProvider);
+    final premium = tierAsync.valueOrNull?.isPremium ?? false;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.charcoal,
-        foregroundColor: const Color(0xFFFBF7F0),
-        titleTextStyle: const TextStyle(fontSize: 18,
-            fontWeight: FontWeight.w700, color: Color(0xFFFBF7F0)),
-        title: Text(am ? 'ጎንደርን ይጠይቁ' : 'Ask Gondar'),
-      ),
-      body: tierAsync.when(
-        loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.gold)),
-        error: (_, _) => _Locked(am: am),
-        data: (t) => t.isPremium ? _Chat(am: am) : _Locked(am: am),
+      backgroundColor: Colors.transparent,
+      body: GlassBackground(
+        child: SafeArea(
+          child: Column(children: [
+            // ── Header ───────────────────────────────────────
+            Container(
+              height: 64,
+              padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: AppColors.line)),
+              ),
+              child: Row(children: [
+                if (Navigator.canPop(context))
+                  IconButton(
+                    tooltip: am ? 'ተመለስ' : 'Back',
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                  ),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                      color: AppColors.ink, shape: BoxShape.circle),
+                  child: const Icon(Icons.auto_awesome,
+                      color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(am ? 'የጎንደር መሪ' : 'Gondar guide',
+                      style: const TextStyle(fontSize: 19,
+                          fontWeight: FontWeight.w800)),
+                ),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(52, 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    textStyle: AppFonts.button(14, FontWeight.w800),
+                  ),
+                  onPressed: () =>
+                      ref.read(languageProvider.notifier).toggle(),
+                  child: Text(am ? 'EN' : 'አማ',
+                      semanticsLabel:
+                          am ? 'በእንግሊዝኛ መልስ' : 'Answer in Amharic'),
+                ),
+                if (premium)
+                  IconButton(
+                    tooltip: am ? 'አዲስ ውይይት' : 'New chat',
+                    onPressed: () => setState(() => _chatKey++),
+                    icon: const Icon(Icons.add_comment_outlined),
+                  )
+                else
+                  const SizedBox(width: 8),
+              ]),
+            ),
+            Expanded(
+              child: tierAsync.when(
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (_, _) => _Locked(am: am),
+                data: (t) => t.isPremium
+                    ? _Chat(key: ValueKey(_chatKey), am: am)
+                    : _Locked(am: am),
+              ),
+            ),
+          ]),
+        ),
       ),
     );
+  }
+}
+
+// ── Hello block shared by locked + empty chat ───────────────────
+class _Hello extends StatelessWidget {
+  final bool am;
+  const _Hello({required this.am});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Container(
+        width: 80,
+        height: 80,
+        decoration: const BoxDecoration(
+          color: AppColors.ink,
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: AppColors.gray100, spreadRadius: 8)],
+        ),
+        child: const Icon(Icons.auto_awesome, color: Colors.white, size: 38),
+      ),
+      const SizedBox(height: 18),
+      Text(am ? 'ሰላም! እኔ የጎንደር መሪዎ ነኝ።' : 'Selam! I am your Gondar guide.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 24, height: 1.25,
+              fontWeight: FontWeight.w800)),
+      const SizedBox(height: 8),
+      Text(
+          am
+              ? 'ስለ ቦታዎች፣ ታሪክ፣ ጥምቀት፣ ምግብ ወይም መጓጓዣ ይጠይቁኝ።'
+              : 'Ask me about places, history, Timket, food or getting around.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16, height: 1.5,
+              color: AppColors.ink700)),
+      const SizedBox(height: 10),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.stone,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.place_outlined, size: 14, color: AppColors.ink700),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+                am ? 'የምመልሰው ስለ ጎንደር እና ስለ አማራ ክልል ብቻ ነው።'
+                    : 'I answer only about Gondar and the Amhara region.',
+                style: const TextStyle(fontSize: 13,
+                    fontWeight: FontWeight.w600, color: AppColors.ink700)),
+          ),
+        ]),
+      ),
+    ]);
   }
 }
 
@@ -46,50 +162,46 @@ class _Locked extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: 72, height: 72,
-            decoration: const BoxDecoration(
-                color: AppColors.charcoal, shape: BoxShape.circle),
-            child: const Icon(Icons.auto_awesome, color: AppColors.gold, size: 34),
-          ),
-          const SizedBox(height: 18),
-          Text(am ? 'የፕሪሚየም አገልግሎት' : 'A Premium feature',
-              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800,
-                  color: AppColors.charcoal)),
-          const SizedBox(height: 8),
-          Text(
-            am
-                ? 'በአማርኛ ወይም በእንግሊዝኛ ይጠይቁ፣ ከተማው ያጸደቀውን መልስ ያግኙ።'
-                : 'Chat in Amharic or English and get answers the City has approved.',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
-          ),
-          const SizedBox(height: 22),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.charcoal,
-              foregroundColor: AppColors.gold,
-              minimumSize: const Size(220, 50),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 200),
+      children: [
+        _Hello(am: am),
+        const SizedBox(height: 28),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: AppDecor.card(),
+          child: Column(children: [
+            StatusTag(am ? 'ፕሪሚየም' : 'Premium',
+                icon: Icons.workspace_premium_outlined),
+            const SizedBox(height: 10),
+            Text(
+              am
+                  ? 'በአማርኛ ወይም በእንግሊዝኛ ይጠይቁ፣ ከተማው ያጸደቀውን መልስ ያግኙ።'
+                  : 'Chat in Amharic or English and get answers the City has approved.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, height: 1.45,
+                  color: AppColors.ink700),
             ),
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const PremiumScreen())),
-            icon: const Icon(Icons.workspace_premium),
-            label: Text(am ? 'ፕሪሚየም ይመልከቱ' : 'See Premium'),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            am ? 'SOS እና የደህንነት መረጃ ሁልጊዜ ነፃ ነው።'
-                : 'SOS and safety information are always free.',
-            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-          ),
-        ]),
-      ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () =>
+                    pushScreen(context, const PremiumScreen()),
+                icon: const Icon(Icons.workspace_premium),
+                label: Text(am ? 'ፕሪሚየም ይመልከቱ' : 'See Premium'),
+              ),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          am ? 'SOS እና የደህንነት መረጃ ሁልጊዜ ነፃ ነው።'
+              : 'SOS and safety information are always free.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13, color: AppColors.muted),
+        ),
+      ],
     );
   }
 }
@@ -99,13 +211,12 @@ class _Msg {
   final String role; // user | assistant
   final String text;
   final String? source;
-  final bool badge; // show `source` as-is (greeting) instead of "Source: …"
-  const _Msg(this.role, this.text, {this.source, this.badge = false});
+  const _Msg(this.role, this.text, {this.source});
 }
 
 class _Chat extends StatefulWidget {
   final bool am;
-  const _Chat({required this.am});
+  const _Chat({super.key, required this.am});
   @override
   State<_Chat> createState() => _ChatState();
 }
@@ -117,9 +228,11 @@ class _ChatState extends State<_Chat> {
   bool _thinking = false;
 
   List<String> get _suggestions => widget.am
-      ? ['ጥምቀትን የት ማየት እችላለሁ?', 'ፋሲል ግቢ መቼ ይከፈታል?', 'ነገ ዝናብ ይዘንባል?']
-      : ['Where can I watch Timket?', 'Fasil Ghebbi opening hours?',
-         'Will it rain tomorrow?'];
+      ? ['በአንድ ቀን ምን ማየት እችላለሁ?', 'ጥምቀት መቼና የት ነው?',
+         'ፋሲል ግቢ መቼ ይከፈታል?', 'ነገ ዝናብ ይዘንባል?', 'የትኛውን ምግብ ልሞክር?']
+      : ['What can I see in one day?', 'When is Timket, and where?',
+         'Fasil Ghebbi opening hours?', 'Will it rain tomorrow?',
+         'What food should I try?'];
 
   @override
   void dispose() {
@@ -200,43 +313,70 @@ class _ChatState extends State<_Chat> {
       Expanded(
         child: ListView(
           controller: _scroll,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
           children: [
-            _bubble(_Msg('assistant', am
-                ? 'ሰላም! ስለ ጎንደር ማንኛውንም ይጠይቁኝ።'
-                : 'Selam! Ask me anything about Gondar.',
-                source: am ? 'በከተማው የጸደቀ · ፕሪሚየም' : 'City-approved · Premium',
-                badge: true)),
-            if (_msgs.isEmpty)
-              Wrap(spacing: 8, runSpacing: 8, children: [
-                for (final s in _suggestions)
-                  ActionChip(
-                    label: Text(s, style: const TextStyle(fontSize: 12.5)),
-                    backgroundColor: AppColors.surfaceContainer,
-                    side: BorderSide.none,
-                    onPressed: () => _send(s),
+            if (_msgs.isEmpty) ...[
+              _Hello(am: am),
+              const SizedBox(height: 22),
+              Kicker(am ? 'እነዚህን ይጠይቁ' : 'Try asking',
+                  color: AppColors.muted),
+              const SizedBox(height: 10),
+              for (final s in _suggestions)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Material(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      side: const BorderSide(color: AppColors.line),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () => _send(s),
+                      child: Container(
+                        constraints: const BoxConstraints(minHeight: 52),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        child: Row(children: [
+                          Expanded(
+                            child: Text(s,
+                                style: const TextStyle(fontSize: 15,
+                                    fontWeight: FontWeight.w600)),
+                          ),
+                          const Icon(Icons.arrow_forward_rounded,
+                              size: 18, color: AppColors.black),
+                        ]),
+                      ),
+                    ),
                   ),
-              ]),
+                ),
+            ],
             for (final m in _msgs) _bubble(m),
             if (_thinking)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Row(children: [
                   const SizedBox(width: 16, height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.gold)),
+                      child: CircularProgressIndicator(strokeWidth: 2)),
                   const SizedBox(width: 10),
                   Text(am ? 'እያሰበ ነው…' : 'Thinking…',
-                      style: const TextStyle(color: AppColors.textMuted)),
+                      style: const TextStyle(color: AppColors.muted)),
                 ]),
               ),
           ],
         ),
       ),
-      SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      // Input — sits above the floating tab bar.
+      Padding(
+        padding: EdgeInsets.fromLTRB(
+            16, 8, 16, 8 + MediaQuery.paddingOf(context).bottom),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: const Color(0xFF8C8C8C), width: 1.5),
+          ),
+          padding: const EdgeInsets.only(left: 16, right: 4),
           child: Row(children: [
             Expanded(
               child: TextField(
@@ -245,31 +385,25 @@ class _ChatState extends State<_Chat> {
                 maxLines: 4,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _send(),
+                style: const TextStyle(fontSize: 16),
                 decoration: InputDecoration(
-                  hintText: am ? 'ስለ ጎንደር ማንኛውንም ይጠይቁ…'
-                      : 'Ask anything about Gondar…',
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: AppColors.surfaceVariant),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: AppColors.surfaceVariant),
-                  ),
+                  filled: false,
+                  hintText: am ? 'ስለ ጎንደር ይጠይቁ…' : 'Ask about Gondar…',
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
             IconButton.filled(
+              tooltip: am ? 'ላክ' : 'Send',
               style: IconButton.styleFrom(
-                  backgroundColor: AppColors.gold,
-                  foregroundColor: AppColors.goldDeep),
+                  backgroundColor: AppColors.ink,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(44, 44)),
               onPressed: _thinking ? null : _send,
-              icon: const Icon(Icons.send_rounded),
+              icon: const Icon(Icons.arrow_upward_rounded),
             ),
           ]),
         ),
@@ -283,30 +417,34 @@ class _ChatState extends State<_Chat> {
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.8),
+            maxWidth: MediaQuery.sizeOf(context).width * 0.8),
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: mine ? AppColors.rust : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: mine ? null : Border.all(color: AppColors.surfaceVariant),
+          color: mine ? AppColors.ink : Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(mine ? 18 : 6),
+            bottomRight: Radius.circular(mine ? 6 : 18),
+          ),
+          border: mine ? null : Border.all(color: AppColors.line),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           SelectableText(m.text, style: TextStyle(
-              fontSize: 14, height: 1.4,
-              color: mine ? Colors.white : AppColors.charcoal)),
+              fontSize: 15, height: 1.45,
+              color: mine ? Colors.white : AppColors.ink)),
           if (!mine && m.source != null) ...[
             const SizedBox(height: 6),
             Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.verified_rounded, size: 13, color: AppColors.green),
+              const Icon(Icons.verified_rounded, size: 13,
+                  color: AppColors.verified),
               const SizedBox(width: 4),
-              Text(m.badge
-                      ? m.source!
-                      : widget.am && m.source == 'City of Gondar'
-                          ? 'ምንጭ፡ የጎንደር ከተማ'
-                          : 'Source: ${m.source}',
-                  style: const TextStyle(fontSize: 11,
-                      color: AppColors.green, fontWeight: FontWeight.w600)),
+              Text(widget.am && m.source == 'City of Gondar'
+                      ? 'ምንጭ፡ የጎንደር ከተማ'
+                      : 'Source: ${m.source}',
+                  style: const TextStyle(fontSize: 12,
+                      color: AppColors.verified, fontWeight: FontWeight.w700)),
             ]),
           ],
         ]),

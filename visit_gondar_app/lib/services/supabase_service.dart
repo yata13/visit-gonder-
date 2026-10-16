@@ -18,6 +18,16 @@ class SupabaseService {
   static User? get currentUser => client.auth.currentUser;
   static bool  get isLoggedIn  => currentUser != null;
 
+  /// Like [currentUser] but never throws (e.g. Supabase failed to
+  /// start because the phone is offline or `.env` is missing).
+  static User? get safeUser {
+    try {
+      return client.auth.currentUser;
+    } catch (_) {
+      return null;
+    }
+  }
+
   // Auth state stream — listen for login/logout changes
   static Stream<AuthState> get authStream => client.auth.onAuthStateChange;
 }

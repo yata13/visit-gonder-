@@ -174,9 +174,9 @@ class _TimketLiveDashboardState extends State<TimketLiveDashboard>
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF38150A), Color(0xFF1C1410)],
+          colors: [Color(0xFF232323), Color(0xFF1C1C1C)],
         ),
-        border: Border.all(color: const Color(0xFF7A2F12)),
+        border: Border.all(color: const Color(0xFF2B2B2B)),
         boxShadow: [BoxShadow(
             color: AppColors.rust.withAlpha(70),
             blurRadius: 24, offset: const Offset(0, 10))],
@@ -206,12 +206,12 @@ class _TimketLiveDashboardState extends State<TimketLiveDashboard>
               padding: const EdgeInsets.symmetric(
                   horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.gold.withAlpha(34),
+                color: Colors.white.withAlpha(34),
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: AppColors.gold.withAlpha(90)),
+                border: Border.all(color: Colors.white.withAlpha(90)),
               ),
               child: const Text('DEMO',
-                  style: TextStyle(color: AppColors.gold, fontSize: 9,
+                  style: TextStyle(color: Colors.white, fontSize: 9,
                       fontWeight: FontWeight.w800, letterSpacing: 1.2)),
             ),
         ]),
@@ -220,21 +220,21 @@ class _TimketLiveDashboardState extends State<TimketLiveDashboard>
         // ── Happening now ──
         if (current != null) ...[
           Text(isAm(lang) ? 'አሁን እየተካሄደ ያለ' : 'HAPPENING NOW',
-              style: const TextStyle(color: AppColors.gold, fontSize: 10.5,
+              style: const TextStyle(color: Colors.white, fontSize: 10.5,
                   fontWeight: FontWeight.w800, letterSpacing: 1.6)),
           const SizedBox(height: 6),
           Text(current.title(lang),
-              style: const TextStyle(color: Color(0xFFFBF7F0),
+              style: const TextStyle(color: Color(0xFFFFFFFF),
                   fontSize: 20, fontWeight: FontWeight.w800,
                   height: 1.25, letterSpacing: -0.3)),
           const SizedBox(height: 6),
           Row(children: [
             const Icon(Icons.location_on,
-                size: 13, color: AppColors.gold),
+                size: 13, color: Colors.white),
             const SizedBox(width: 4),
             Expanded(
               child: Text(current.location(lang),
-                  style: const TextStyle(color: Color(0xFFD8CDBC),
+                  style: const TextStyle(color: Color(0xFFCCCCCC),
                       fontSize: 12.5)),
             ),
           ]),
@@ -244,18 +244,18 @@ class _TimketLiveDashboardState extends State<TimketLiveDashboard>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.gold.withAlpha(22),
+              color: Colors.white.withAlpha(22),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.gold.withAlpha(70)),
+              border: Border.all(color: Colors.white.withAlpha(70)),
             ),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
               const Icon(Icons.tips_and_updates_outlined,
-                  size: 17, color: AppColors.gold),
+                  size: 17, color: Colors.white),
               const SizedBox(width: 9),
               Expanded(
                 child: Text(current.stand(lang),
-                    style: const TextStyle(color: Color(0xFFEFE6D8),
+                    style: const TextStyle(color: Color(0xFFE6E6E6),
                         fontSize: 12.5, height: 1.5)),
               ),
             ]),
@@ -267,13 +267,13 @@ class _TimketLiveDashboardState extends State<TimketLiveDashboard>
           const SizedBox(height: 12),
           Row(children: [
             const Icon(Icons.schedule,
-                size: 14, color: Color(0xFF8A7E70)),
+                size: 14, color: Color(0xFF8C8C8C)),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
                 '${isAm(lang) ? 'ቀጣይ' : 'Next'}: ${next.title(lang)} · ${_countdown(next.start.difference(_now), lang)}',
                 maxLines: 2, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Color(0xFFB3A899),
+                style: const TextStyle(color: Color(0xFFB3B3B3),
                     fontSize: 12.5, fontWeight: FontWeight.w600,
                     height: 1.4),
               ),
@@ -292,8 +292,8 @@ class _TimketLiveDashboardState extends State<TimketLiveDashboard>
                   style: const TextStyle(fontWeight: FontWeight.w800,
                       fontSize: 13)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.gold,
-                foregroundColor: AppColors.charcoal,
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.ink,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -311,8 +311,8 @@ class _TimketLiveDashboardState extends State<TimketLiveDashboard>
                   style: const TextStyle(fontWeight: FontWeight.w700,
                       fontSize: 13)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFEFE6D8),
-                side: const BorderSide(color: Color(0xFF5A4A3A)),
+                foregroundColor: const Color(0xFFE6E6E6),
+                side: const BorderSide(color: Color(0xFF3A3A3A)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),

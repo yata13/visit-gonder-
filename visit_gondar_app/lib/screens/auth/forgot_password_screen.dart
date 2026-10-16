@@ -125,7 +125,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       onPressed: _loading ? null : _send,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.gold,
-                        foregroundColor: AppColors.goldDeep,
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14)),
                       ),
@@ -133,7 +133,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ? const SizedBox(width: 22, height: 22,
                               child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
-                                  color: AppColors.goldDeep))
+                                  color: Colors.white))
                           : const Text('Send reset link',
                               style: TextStyle(fontSize: 16,
                                   fontWeight: FontWeight.w700)),
@@ -172,7 +172,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           onPressed: () => Navigator.pop(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.gold,
-                            foregroundColor: AppColors.goldDeep,
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14)),
                           ),

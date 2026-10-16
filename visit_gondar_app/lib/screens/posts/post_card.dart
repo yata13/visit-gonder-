@@ -71,7 +71,7 @@ class _PostCardState extends State<PostCard>
                   ),
                   child: const Center(
                     child: Text('VG',
-                        style: TextStyle(color: AppColors.gold,
+                        style: TextStyle(color: Colors.white,
                             fontWeight: FontWeight.w800, fontSize: 13)),
                   ),
                 ),

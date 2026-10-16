@@ -13,13 +13,14 @@ import '../booking/my_bookings_screen.dart';
 //  Hotels (live) · Taxi & transfers · More services (food, shops).
 // ═══════════════════════════════════════════════════════════════
 class StayScreen extends ConsumerStatefulWidget {
-  const StayScreen({super.key});
+  final int initialTab; // 0 hotels, 1 taxi, 2 more
+  const StayScreen({super.key, this.initialTab = 0});
   @override
   ConsumerState<StayScreen> createState() => _StayScreenState();
 }
 
 class _StayScreenState extends ConsumerState<StayScreen> {
-  int _tab = 0; // 0 hotels, 1 taxi, 2 more
+  late int _tab = widget.initialTab;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +34,14 @@ class _StayScreenState extends ConsumerState<StayScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
             child: Row(children: [
+              if (Navigator.canPop(context)) ...[
+                IconButton(
+                  tooltip: am ? 'ተመለስ' : 'Back',
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back_rounded),
+                ),
+                const SizedBox(width: 4),
+              ],
               Expanded(
                 child: Text(am ? 'ማረፊያና አገልግሎት' : 'Stay & Services',
                     style: const TextStyle(fontSize: 24,
@@ -51,10 +60,10 @@ class _StayScreenState extends ConsumerState<StayScreen> {
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     const Icon(Icons.receipt_long,
-                        size: 15, color: AppColors.gold),
+                        size: 15, color: Colors.white),
                     const SizedBox(width: 6),
                     Text(am ? 'ማስያዣዎቼ' : 'My Bookings',
-                        style: const TextStyle(color: AppColors.gold,
+                        style: const TextStyle(color: Colors.white,
                             fontSize: 12, fontWeight: FontWeight.w700)),
                   ]),
                 ),
@@ -108,7 +117,7 @@ class _StayScreenState extends ConsumerState<StayScreen> {
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, size: 15,
-              color: selected ? AppColors.gold : AppColors.textMuted),
+              color: selected ? Colors.white : AppColors.textMuted),
           const SizedBox(width: 7),
           Text(label, style: TextStyle(fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -242,12 +251,12 @@ class _TaxiTab extends StatelessWidget {
           decoration: BoxDecoration(color: AppColors.charcoal,
               borderRadius: BorderRadius.circular(16)),
           child: Row(children: [
-            const Icon(Icons.info_outline, color: AppColors.gold, size: 20),
+            const Icon(Icons.info_outline, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Expanded(child: Text(
               am ? 'ለማዘዝ ይደውሉ። ዋጋ ከመሳፈርዎ በፊት ይስማሙ።'
                  : 'Tap to call. Always agree the fare before you ride.',
-              style: const TextStyle(color: Color(0xFFEFE6D8),
+              style: const TextStyle(color: Color(0xFFE6E6E6),
                   fontSize: 12.5, height: 1.4))),
           ]),
         ),
@@ -292,7 +301,7 @@ class _TaxiTab extends StatelessWidget {
             padding: const EdgeInsets.all(11),
             decoration: const BoxDecoration(color: AppColors.charcoal,
                 shape: BoxShape.circle),
-            child: const Icon(Icons.call, color: AppColors.gold, size: 20),
+            child: const Icon(Icons.call, color: Colors.white, size: 20),
           ),
         ),
       ]),

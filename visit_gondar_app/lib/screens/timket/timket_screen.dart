@@ -14,12 +14,12 @@ class TimketScreen extends ConsumerWidget {
   /// admin: first a Timket event photo, then the Fasilides Bath site
   /// photo, then any site photo.
   String _heroUrl(WidgetRef ref) {
-    final events = ref.watch(eventsProvider).value ?? const [];
+    final events = ref.watch(eventsProvider).valueOrNull ?? const [];
     for (final e in events) {
       final p = (e['photo'] ?? '') as String;
       if (e['includes_timket'] == true && p.isNotEmpty) return p;
     }
-    final sites = ref.watch(sitesProvider).value ?? const [];
+    final sites = ref.watch(sitesProvider).valueOrNull ?? const [];
     for (final s in sites) {
       final name = ((s['name_en'] ?? '') as String).toLowerCase();
       final p = (s['photo'] ?? '') as String;
@@ -208,7 +208,7 @@ class TimketScreen extends ConsumerWidget {
               isAm(lang)
                   ? 'የት መቆም እንዳለብዎ — እያንዳንዱ ቅጽበት'
                   : 'Where to stand — every moment',
-              style: const TextStyle(color: Color(0xFFFBF7F0),
+              style: const TextStyle(color: Color(0xFFFFFFFF),
                   fontSize: 21, fontWeight: FontWeight.w800,
                   letterSpacing: -0.4),
             ),
@@ -217,7 +217,7 @@ class TimketScreen extends ConsumerWidget {
               isAm(lang)
                   ? 'የጥምቀት ሙሉ መርሃ ግብር ከምርጥ መቆሚያ ቦታዎች ጋር'
                   : 'The full Timket program with the best viewing spots',
-              style: const TextStyle(color: Color(0xFFB3A899),
+              style: const TextStyle(color: Color(0xFFB3B3B3),
                   fontSize: 13)),
             const SizedBox(height: 20),
 
@@ -232,12 +232,12 @@ class TimketScreen extends ConsumerWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                 Text(fmt.format(p.start).toUpperCase(),
-                    style: const TextStyle(color: AppColors.gold,
+                    style: const TextStyle(color: Colors.white,
                         fontSize: 10.5, fontWeight: FontWeight.w800,
                         letterSpacing: 1.2)),
                 const SizedBox(height: 6),
                 Text(p.title(lang),
-                    style: const TextStyle(color: Color(0xFFFBF7F0),
+                    style: const TextStyle(color: Color(0xFFFFFFFF),
                         fontSize: 16, fontWeight: FontWeight.w800,
                         height: 1.3)),
                 const SizedBox(height: 4),
@@ -246,26 +246,26 @@ class TimketScreen extends ConsumerWidget {
                       size: 12, color: AppColors.rust),
                   const SizedBox(width: 4),
                   Expanded(child: Text(p.location(lang),
-                      style: const TextStyle(color: Color(0xFFD8CDBC),
+                      style: const TextStyle(color: Color(0xFFCCCCCC),
                           fontSize: 12))),
                 ]),
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.gold.withAlpha(20),
+                    color: Colors.white.withAlpha(20),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                        color: AppColors.gold.withAlpha(60)),
+                        color: Colors.white.withAlpha(60)),
                   ),
                   child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                     const Icon(Icons.tips_and_updates_outlined,
-                        size: 15, color: AppColors.gold),
+                        size: 15, color: Colors.white),
                     const SizedBox(width: 8),
                     Expanded(child: Text(p.stand(lang),
-                        style: const TextStyle(color: Color(0xFFEFE6D8),
+                        style: const TextStyle(color: Color(0xFFE6E6E6),
                             fontSize: 12.5, height: 1.5))),
                   ]),
                 ),

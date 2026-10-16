@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
 //  VISIT GONDAR — TOURIST APP (Android / iOS)
 //  Entry point. Boots Supabase, starts realtime alert popups,
-//  then decides the first screen: intro → login → main app.
+//  then decides the first screen: splash → welcome → sign-in → app.
 //  Run with:  flutter run
 // ═══════════════════════════════════════════════════════════════
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,19 +15,21 @@ import 'theme/app_theme.dart';
 import 'services/supabase_service.dart';
 import 'services/realtime_alerts.dart';
 import 'providers/language_provider.dart';
+import 'widgets/ui.dart';
 import 'screens/onboarding/intro_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/explore/explore_screen.dart';
-import 'screens/emergency/emergency_screen.dart';
-import 'screens/map/map_screen.dart';
-import 'screens/stay/stay_screen.dart';
+import 'screens/passport/passport_screen.dart';
+import 'screens/ai/ask_gondar_screen.dart';
+import 'screens/me/me_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
   ));
   // Never block the app on startup problems — screens have their own
   // loading/error states and recover once the connection is back.
@@ -47,14 +50,12 @@ class VisitGondarApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       navigatorKey: rootNavigatorKey,
       theme: AppTheme.theme,
-      // Smooth page transitions globally
-      builder: (context, child) => child!,
       home: const _LaunchDecider(),
     );
   }
 }
 
-// ── Decides the first screen: intro → login → app ─────────────
+// ── Decides the first screen: welcome → sign-in → app ─────────
 class _LaunchDecider extends StatefulWidget {
   const _LaunchDecider();
   @override
@@ -71,250 +72,281 @@ class _LaunchDeciderState extends State<_LaunchDecider> {
   }
 
   Future<void> _decide() async {
-    // Already signed in → straight to the app.
-    if (Supabase.instance.client.auth.currentSession != null) {
-      _set(const MainNavigation());
-      return;
+    // Let the splash breathe for a moment.
+    final wait = Future.delayed(const Duration(milliseconds: 900));
+    Widget next;
+    if (_signedIn()) {
+      next = const MainNavigation();
+    } else {
+      // First time ever → language + 3 welcome slides, else sign-in.
+      bool introSeen = false;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        introSeen = prefs.getBool(AppConstants.prefOnboardingDone) ?? false;
+      } catch (_) {}
+      next = introSeen ? const OnboardingScreen() : const IntroScreen();
     }
-    // First time ever → show the 3-page intro, else go to login/sign-up.
-    bool introSeen = false;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      introSeen = prefs.getBool(AppConstants.prefOnboardingDone) ?? false;
-    } catch (_) {}
-    _set(introSeen ? const OnboardingScreen() : const IntroScreen());
+    await wait;
+    if (mounted) setState(() => _next = next);
   }
 
-  void _set(Widget w) {
-    if (mounted) setState(() => _next = w);
+  bool _signedIn() {
+    try {
+      return Supabase.instance.client.auth.currentSession != null;
+    } catch (_) {
+      return false; // Supabase failed to boot (offline / no .env)
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      child: _next ??
-          const Scaffold(
-            backgroundColor: AppColors.charcoal,
-            body: Center(
-              child: CircularProgressIndicator(color: AppColors.gold),
-            ),
-          ),
+      duration: const Duration(milliseconds: 350),
+      child: _next ?? const SplashScreen(),
     );
   }
 }
 
-// ── Main Navigation ───────────────────────────────────────────
+/// Splash — white, app mark, "Visit Gondar · ጎንደር", thin loader.
+class SplashScreen extends StatelessWidget {
+  const SplashScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(children: [
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 120),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const AppMark(size: 112),
+              const SizedBox(height: 18),
+              const Text(AppConstants.appName,
+                  style: TextStyle(fontSize: 34, height: 1.1,
+                      fontWeight: FontWeight.w800, letterSpacing: -0.6,
+                      color: AppColors.black)),
+              const SizedBox(height: 8),
+              const Text('ጎንደር · Gondar',
+                  style: TextStyle(fontSize: 18,
+                      fontWeight: FontWeight.w600, color: AppColors.muted)),
+            ]),
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 72,
+          child: Center(
+            child: SizedBox(
+              width: 120,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: const LinearProgressIndicator(
+                  minHeight: 4,
+                  color: AppColors.black,
+                  backgroundColor: AppColors.stone,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+// ── Main Navigation: Home · Explore · Passport · Ask AI · Me ──
 class MainNavigation extends ConsumerStatefulWidget {
-  const MainNavigation({super.key});
+  final int initialIndex;
+  const MainNavigation({super.key, this.initialIndex = 0});
+
+  /// Lets any screen switch tabs (e.g. Home → "Open" Passport).
+  static void goTo(BuildContext context, int index) =>
+      context.findAncestorStateOfType<_MainNavigationState>()?.select(index);
+
   @override
   ConsumerState<MainNavigation> createState() => _MainNavigationState();
 }
 
-class _MainNavigationState extends ConsumerState<MainNavigation>
-    with TickerProviderStateMixin {
-  int _currentIndex = 0;
-  late AnimationController _fadeCtrl;
-  late Animation<double> _fadeAnim;
+class _MainNavigationState extends ConsumerState<MainNavigation> {
+  late int _index = widget.initialIndex;
+  final _visited = <int>{};
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    ExploreScreen(),     // Sites + Events combined
-    EmergencyScreen(),   // SOS
-    MapScreen(),
-    StayScreen(),        // Hotels + Taxi + more services
-  ];
+  static const _askTab = 3;
 
-  List<_NavItem> _navItems(String lang) => [
-    _NavItem(Icons.home_outlined, Icons.home, tr(lang, 'nav_home')),
-    _NavItem(Icons.account_balance_outlined, Icons.account_balance,
-        tr(lang, 'nav_sites')),
-    _NavItem(Icons.sos_outlined, Icons.sos, tr(lang, 'nav_sos'),
-        emphasis: true),
-    _NavItem(Icons.map_outlined, Icons.map, tr(lang, 'nav_map')),
-    _NavItem(Icons.hotel_outlined, Icons.hotel, tr(lang, 'nav_stay')),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _fadeCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 220));
-    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
-    _fadeCtrl.forward();
+  void select(int i) {
+    if (i == _index) return;
+    HapticFeedback.selectionClick();
+    setState(() => _index = i);
   }
 
-  @override
-  void dispose() { _fadeCtrl.dispose(); super.dispose(); }
-
-  void _onTabTap(int i) {
-    if (i == _currentIndex) return;
-    _fadeCtrl.forward(from: 0);
-    setState(() => _currentIndex = i);
-  }
+  Widget _screen(int i) => switch (i) {
+        0 => const HomeScreen(),
+        1 => const ExploreScreen(),
+        2 => const PassportScreen(),
+        3 => const AskGondarScreen(),
+        _ => const MeScreen(),
+      };
 
   @override
   Widget build(BuildContext context) {
     final lang = ref.watch(languageProvider);
+    final am = isAm(lang);
+    _visited.add(_index);
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+    final tabs = [
+      _Tab(Icons.home_outlined, Icons.home_rounded, am ? 'መነሻ' : 'Home'),
+      _Tab(Icons.explore_outlined, Icons.explore, am ? 'ያስሱ' : 'Explore'),
+      _Tab(Icons.badge_outlined, Icons.badge,
+          am ? 'ፓስፖርት' : 'Passport'),
+      _Tab(Icons.auto_awesome_outlined, Icons.auto_awesome,
+          am ? 'AI ይጠይቁ' : 'Ask AI'),
+      _Tab(Icons.person_outline_rounded, Icons.person_rounded,
+          am ? 'እኔ' : 'Me'),
+    ];
+
     return Scaffold(
-      body: FadeTransition(
-        opacity: _fadeAnim,
-        child: _screens[_currentIndex],
-      ),
-      bottomNavigationBar: _AnimatedNavBar(
-        currentIndex: _currentIndex,
-        items: _navItems(lang),
-        onTap: _onTabTap,
+      extendBody: true,
+      backgroundColor: AppColors.ground,
+      body: Stack(children: [
+        // Keep visited tabs alive so scroll position and chats survive.
+        IndexedStack(
+          index: _index,
+          children: List.generate(5, (i) =>
+              _visited.contains(i) ? _screen(i) : const SizedBox.shrink()),
+        ),
+        // SOS — always one tap away. Lifted on Ask AI so it clears
+        // the message box.
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          right: 16,
+          bottom: bottomInset + 80 + (_index == _askTab ? 68 : 0),
+          child: SosButton(
+              semanticLabel: am ? 'SOS — አሁን እርዳታ ያግኙ'
+                  : 'SOS — get help now'),
+        ),
+      ]),
+      bottomNavigationBar: _GlassTabBar(
+        tabs: tabs,
+        index: _index,
+        onTap: select,
+        label: am ? 'ዋና ምናሌ' : 'Main menu',
       ),
     );
   }
 }
 
-// ── Animated Bottom Nav Bar ───────────────────────────────────
-class _AnimatedNavBar extends StatelessWidget {
-  final int currentIndex;
-  final List<_NavItem> items;
+class _Tab {
+  final IconData icon, activeIcon;
+  final String label;
+  const _Tab(this.icon, this.activeIcon, this.label);
+}
+
+/// Dark frosted pill with five tabs; the active tab is a white pill.
+class _GlassTabBar extends StatelessWidget {
+  final List<_Tab> tabs;
+  final int index;
   final ValueChanged<int> onTap;
-  const _AnimatedNavBar({
-    required this.currentIndex,
-    required this.items,
+  final String label;
+  const _GlassTabBar({
+    required this.tabs,
+    required this.index,
     required this.onTap,
+    required this.label,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            children: items.asMap().entries.map((e) {
-              final i = e.key;
-              final item = e.value;
-              final selected = i == currentIndex;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => onTap(i),
-                  behavior: HitTestBehavior.opaque,
-                  child: _NavBarItem(item: item, selected: selected),
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: 8),
+      child: Semantics(
+        container: true,
+        label: label,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                height: 56,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xD11C1C1C), // 82%
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.1)),
                 ),
-              );
-            }).toList(),
+                child: Row(
+                  children: List.generate(tabs.length, (i) {
+                    final on = i == index;
+                    final t = tabs[i];
+                    return Expanded(
+                      child: Semantics(
+                        button: true,
+                        selected: on,
+                        label: t.label,
+                        excludeSemantics: true,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => onTap(i),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOut,
+                            margin: const EdgeInsets.symmetric(horizontal: 1),
+                            decoration: BoxDecoration(
+                              color: on ? Colors.white : Colors.transparent,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: on
+                                  ? const [BoxShadow(
+                                      color: Color(0x40000000),
+                                      blurRadius: 14,
+                                      offset: Offset(0, 6))]
+                                  : null,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(on ? t.activeIcon : t.icon,
+                                    size: 20,
+                                    color: on
+                                        ? AppColors.black
+                                        : Colors.white
+                                            .withValues(alpha: 0.72)),
+                                const SizedBox(height: 1),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(t.label,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        height: 1.15,
+                                        fontWeight: on
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        color: on
+                                            ? AppColors.black
+                                            : Colors.white
+                                                .withValues(alpha: 0.72),
+                                      )),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-class _NavBarItem extends StatefulWidget {
-  final _NavItem item;
-  final bool selected;
-  const _NavBarItem({required this.item, required this.selected});
-  @override
-  State<_NavBarItem> createState() => _NavBarItemState();
-}
-
-class _NavBarItemState extends State<_NavBarItem>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _scaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 200));
-    _scaleAnim = Tween(begin: 1.0, end: 1.25).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut));
-    if (widget.selected) _ctrl.forward();
-  }
-
-  @override
-  void didUpdateWidget(_NavBarItem old) {
-    super.didUpdateWidget(old);
-    if (widget.selected && !old.selected) {
-      _ctrl.forward(from: 0);
-    } else if (!widget.selected && old.selected) {
-      _ctrl.reverse();
-    }
-  }
-
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = widget.selected;
-    final sos = widget.item.emphasis;
-
-    // SOS gets a constant red treatment so it's always obvious.
-    final iconColor = sos
-        ? AppColors.error
-        : (selected ? AppColors.goldDark : AppColors.textMuted);
-    final labelColor = sos
-        ? AppColors.error
-        : (selected ? AppColors.goldDark : AppColors.textMuted);
-
-    return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      ScaleTransition(
-        scale: _scaleAnim,
-        child: sos
-            ? Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withAlpha(selected ? 38 : 22),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(widget.item.activeIcon,
-                    color: AppColors.error, size: 20),
-              )
-            : Icon(
-                selected ? widget.item.activeIcon : widget.item.icon,
-                color: iconColor,
-                size: 22,
-              ),
-      ),
-      const SizedBox(height: 3),
-      AnimatedDefaultTextStyle(
-        duration: const Duration(milliseconds: 200),
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: (selected || sos) ? FontWeight.w700 : FontWeight.w400,
-          color: labelColor,
-        ),
-        child: Text(widget.item.label),
-      ),
-      // Active dot
-      AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-        width: selected ? 16 : 0,
-        height: 3,
-        margin: const EdgeInsets.only(top: 3),
-        decoration: BoxDecoration(
-          color: sos ? AppColors.error : AppColors.goldDark,
-          borderRadius: BorderRadius.circular(2),
-        ),
-      ),
-    ]);
-  }
-}
-
-class _NavItem {
-  final IconData icon, activeIcon;
-  final String label;
-  final bool emphasis; // SOS — always shown in red
-  const _NavItem(this.icon, this.activeIcon, this.label,
-      {this.emphasis = false});
 }
