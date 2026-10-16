@@ -320,7 +320,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           child: _agreed
                               ? const Icon(Icons.check,
-                                  color: AppColors.goldDeep, size: 14)
+                                  color: Colors.white, size: 14)
                               : null,
                         ),
                         const SizedBox(width: 12),
@@ -517,10 +517,10 @@ class _PasswordStrength extends StatelessWidget {
 
   Color get _color => [
     Colors.transparent,
-    Colors.red,
-    Colors.orange,
-    Colors.yellow,
-    AppColors.green,
+    AppColors.clayInk,
+    AppColors.amberInk,
+    AppColors.infoInk,
+    AppColors.ink,
   ][_strength];
 
   String get _label => [

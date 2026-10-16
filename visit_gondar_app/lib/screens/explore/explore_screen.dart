@@ -1,24 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/nav.dart';
+import '../../core/utils/ethiopian_date.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/data_providers.dart';
 import '../../providers/language_provider.dart';
 import '../../widgets/shimmer_image.dart';
-import '../sites/site_detail_screen.dart';
-import '../timket/timket_roadmap.dart';
+import '../../widgets/ui.dart';
+import '../map/map_screen.dart';
+import '../stay/stay_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
-//  EXPLORE — Historic Sites + Events (Timket, Meskel, festivals)
-//  in one page, switched by a segmented toggle. Timket is pinned.
+//  EXPLORE (tab 2) — design "Explore · list".
+//  One searchable list with category chips: Sites, Hotels, Guides,
+//  Bajaj, Events. "Map" opens the live map. All rows are LIVE from
+//  the same tables the admin dashboard manages.
 // ═══════════════════════════════════════════════════════════════
+enum ExploreCategory { sites, hotels, guides, bajaj, events }
+
 class ExploreScreen extends ConsumerStatefulWidget {
-  const ExploreScreen({super.key});
+  final ExploreCategory initial;
+  const ExploreScreen({super.key, this.initial = ExploreCategory.sites});
   @override
   ConsumerState<ExploreScreen> createState() => _ExploreScreenState();
 }
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
-  int _tab = 0; // 0 = sites, 1 = events
+  late ExploreCategory _cat = widget.initial;
+  final _search = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  String _label(ExploreCategory c, bool am) => switch (c) {
+        ExploreCategory.sites => am ? 'ቦታዎች' : 'Sites',
+        ExploreCategory.hotels => am ? 'ሆቴሎች' : 'Hotels',
+        ExploreCategory.guides => am ? 'አስጎብኚዎች' : 'Guides',
+        ExploreCategory.bajaj => am ? 'ባጃጅ' : 'Bajaj',
+        ExploreCategory.events => am ? 'ዝግጅቶች' : 'Events',
+      };
+
+  bool _matches(Map<String, dynamic> row) {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    return [row['name_en'], row['name_am'], row['name'], row['location'],
+            row['specialty'], row['info']]
+        .whereType<String>()
+        .any((v) => v.toLowerCase().contains(q));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,212 +59,414 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final am = isAm(lang);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-            child: Text(am ? 'ያስሱ' : 'Explore Gondar',
-                style: const TextStyle(fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.charcoal, letterSpacing: -0.5)),
-          ),
-
-          // ── Segmented toggle ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.surfaceVariant),
-              ),
+      backgroundColor: Colors.transparent,
+      body: GlassBackground(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // ── Header ───────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Row(children: [
-                _segment(am ? 'ታሪካዊ ቦታዎች' : 'Historic Sites',
-                    Icons.account_balance, 0),
-                _segment(am ? 'በዓላት' : 'Events',
-                    Icons.celebration, 1),
+                Expanded(
+                  child: Text(am ? 'ያስሱ' : 'Explore',
+                      style: const TextStyle(fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4)),
+                ),
+                PressScale(
+                  onTap: () => pushScreen(context, const MapScreen()),
+                  child: Container(
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.ink,
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.map_outlined,
+                          color: Colors.white, size: 18),
+                      const SizedBox(width: 6),
+                      Text(am ? 'ካርታ' : 'Map',
+                          style: const TextStyle(color: Colors.white,
+                              fontSize: 14, fontWeight: FontWeight.w800)),
+                    ]),
+                  ),
+                ),
               ]),
             ),
-          ),
+            const SizedBox(height: 14),
 
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 240),
-              child: _tab == 0
-                  ? _SitesList(key: const ValueKey('sites'), lang: lang)
-                  : _EventsList(key: const ValueKey('events'), lang: lang),
+            // ── Search ───────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _SearchField(
+                controller: _search,
+                hint: am
+                    ? 'ቤተ መንግሥት፣ ሆቴል፣ አስጎብኚ ይፈልጉ'
+                    : 'Search castles, hotels, guides',
+                onChanged: (v) => setState(() => _query = v),
+              ),
             ),
-          ),
-        ]),
-      ),
-    );
-  }
+            const SizedBox(height: 12),
 
-  Widget _segment(String label, IconData icon, int index) {
-    final selected = _tab == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _tab = index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.charcoal : Colors.transparent,
-            borderRadius: BorderRadius.circular(11),
-          ),
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(icon, size: 16,
-                color: selected ? AppColors.gold : AppColors.textMuted),
-            const SizedBox(width: 7),
-            Text(label,
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-                    color: selected ? Colors.white : AppColors.textSecondary)),
+            // ── Category chips ───────────────────────────────
+            SizedBox(
+              height: 44,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: ExploreCategory.values.map((c) {
+                  final on = c == _cat;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Semantics(
+                      selected: on,
+                      button: true,
+                      child: PressScale(
+                        onTap: () => setState(() => _cat = c),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 18),
+                          alignment: Alignment.center,
+                          decoration: on
+                              ? BoxDecoration(
+                                  color: AppColors.ink,
+                                  borderRadius: BorderRadius.circular(22))
+                              : AppDecor.glass(radius: 22),
+                          child: Text(_label(c, am),
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight:
+                                      on ? FontWeight.w800 : FontWeight.w600,
+                                  color: on ? Colors.white : AppColors.ink)),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // ── List ─────────────────────────────────────────
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: KeyedSubtree(
+                  key: ValueKey(_cat),
+                  child: _list(lang),
+                ),
+              ),
+            ),
           ]),
         ),
       ),
     );
   }
-}
 
-// ── Sites list ────────────────────────────────────────────────
-class _SitesList extends ConsumerWidget {
-  final String lang;
-  const _SitesList({super.key, required this.lang});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final sitesAsync = ref.watch(sitesProvider);
-    return sitesAsync.when(
-      loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.gold)),
-      error: (e, _) => Center(child: Text(tr(lang, 'no_sites'),
-          style: const TextStyle(color: AppColors.textMuted))),
-      data: (sites) => sites.isEmpty
-          ? Center(child: Text(tr(lang, 'no_sites'),
-              style: const TextStyle(color: AppColors.textMuted)))
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-              physics: const BouncingScrollPhysics(),
-              itemCount: sites.length,
-              itemBuilder: (_, i) => _fadeIn(i, _SiteCard(
-                  site: sites[i], lang: lang)),
+  Widget _list(String lang) {
+    final am = isAm(lang);
+    switch (_cat) {
+      case ExploreCategory.sites:
+        return _AsyncList(
+          error: am ? 'አልተጫነም — ኢንተርኔትዎን ያረጋግጡ'
+              : 'Could not load — check your connection',
+          async: ref.watch(sitesProvider),
+          filter: _matches,
+          count: (n) => am ? '$n ቦታዎች' : '$n places',
+          empty: tr(lang, 'no_sites'),
+          item: (s) => _ListCard(
+            photo: sitePhoto(s),
+            icon: Icons.castle_outlined,
+            title: localName(s, lang),
+            meta: [(s['info'] ?? '') as String,
+                    (s['location'] ?? '') as String]
+                .where((v) => v.isNotEmpty)
+                .join(' · '),
+            onTap: () => openSite(context, s, lang),
+          ),
+        );
+      case ExploreCategory.hotels:
+        return _AsyncList(
+          error: am ? 'አልተጫነም — ኢንተርኔትዎን ያረጋግጡ'
+              : 'Could not load — check your connection',
+          async: ref.watch(hotelsProvider),
+          filter: _matches,
+          count: (n) => am ? '$n ሆቴሎች' : '$n hotels',
+          empty: tr(lang, 'no_hotels'),
+          item: (h) => _ListCard(
+            photo: hotelPhoto(h),
+            icon: Icons.hotel_outlined,
+            title: localName(h, lang),
+            verified: true,
+            meta: [
+              '${hotelStars(h)}★',
+              (h['location'] ?? '') as String,
+            ].where((v) => v.isNotEmpty).join(' · '),
+            price: '\$${hotelPrice(h).toStringAsFixed(0)}'
+                '${tr(lang, 'per_night')}',
+            onTap: () => openHotel(context, h),
+          ),
+        );
+      case ExploreCategory.guides:
+        return _AsyncList(
+          error: am ? 'አልተጫነም — ኢንተርኔትዎን ያረጋግጡ'
+              : 'Could not load — check your connection',
+          async: ref.watch(guidesProvider),
+          filter: _matches,
+          count: (n) => am ? '$n አስጎብኚዎች' : '$n guides',
+          empty: am ? 'እስካሁን አስጎብኚ የለም' : 'No guides yet',
+          item: (g) => _ListCard(
+            photo: (g['photo'] ?? '') as String,
+            icon: Icons.person_outline_rounded,
+            title: (g['name'] ?? '') as String,
+            verified: (g['license_status'] ?? '') == 'licensed',
+            meta: (g['specialty'] ?? '') as String,
+            price: '\$${((g['price'] ?? 0) as num).toStringAsFixed(0)}'
+                '${tr(lang, 'per_day')}',
+            onTap: () => openGuide(context, g),
+          ),
+        );
+      case ExploreCategory.bajaj:
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+          children: [
+            PressScale(
+              onTap: () =>
+                  pushScreen(context, const StayScreen(initialTab: 1)),
+              child: GlassPanel(
+                padding: const EdgeInsets.all(16),
+                child: Row(children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: const BoxDecoration(
+                        color: AppColors.ink, shape: BoxShape.circle),
+                    child: const Icon(Icons.electric_rickshaw_outlined,
+                        color: Colors.white),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      Text(am ? 'የባጃጅ አሽከርካሪዎች' : 'Bajaj drivers',
+                          style: const TextStyle(fontSize: 16,
+                              fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 2),
+                      Text(am
+                          ? 'ይደውሉ። ዋጋ ከመሳፈርዎ በፊት ይስማሙ።'
+                          : 'Tap to call. Agree the fare before you ride.',
+                          style: const TextStyle(fontSize: 13,
+                              color: AppColors.muted)),
+                    ]),
+                  ),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: AppColors.muted),
+                ]),
+              ),
             ),
-    );
+          ],
+        );
+      case ExploreCategory.events:
+        return _AsyncList(
+          error: am ? 'አልተጫነም — ኢንተርኔትዎን ያረጋግጡ'
+              : 'Could not load — check your connection',
+          async: ref.watch(eventsProvider),
+          filter: (e) =>
+              _query.isEmpty ||
+              ((e['name'] ?? '') as String)
+                  .toLowerCase()
+                  .contains(_query.toLowerCase()),
+          sort: (a, b) => (a['includes_timket'] == true ? 0 : 1)
+              .compareTo(b['includes_timket'] == true ? 0 : 1),
+          count: (n) => am ? '$n ዝግጅቶች' : '$n events',
+          empty: am ? 'እስካሁን ዝግጅት የለም' : 'No events yet',
+          item: (e) => _EventRow(event: e, am: am,
+              onTap: () => openEvent(context, e, lang)),
+        );
+    }
   }
 }
 
-// ── Events list (Timket pinned first) ─────────────────────────
-class _EventsList extends ConsumerWidget {
-  final String lang;
-  const _EventsList({super.key, required this.lang});
+// ── Search field (glass pill) ─────────────────────────────────
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onChanged;
+  const _SearchField(
+      {required this.controller, required this.hint, required this.onChanged});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final eventsAsync = ref.watch(eventsProvider);
-    return eventsAsync.when(
-      loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.gold)),
-      error: (e, _) => const Center(child: Text('Could not load events',
-          style: TextStyle(color: AppColors.textMuted))),
-      data: (events) {
-        if (events.isEmpty) {
-          return const Center(child: Text('No events yet',
-              style: TextStyle(color: AppColors.textMuted)));
+  Widget build(BuildContext context) => Container(
+        height: 52,
+        decoration: AppDecor.glass(radius: 26),
+        child: TextField(
+          controller: controller,
+          onChanged: onChanged,
+          textInputAction: TextInputAction.search,
+          style: const TextStyle(fontSize: 15, color: AppColors.ink),
+          decoration: InputDecoration(
+            filled: false,
+            hintText: hint,
+            prefixIcon: const Icon(Icons.search_rounded,
+                color: AppColors.muted),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+        ),
+      );
+}
+
+// ── Generic async list with count + empty state ───────────────
+class _AsyncList extends StatelessWidget {
+  final AsyncValue<List<Map<String, dynamic>>> async;
+  final bool Function(Map<String, dynamic>) filter;
+  final int Function(Map<String, dynamic>, Map<String, dynamic>)? sort;
+  final String Function(int) count;
+  final String empty, error;
+  final Widget Function(Map<String, dynamic>) item;
+  const _AsyncList({
+    required this.error,
+    required this.async,
+    required this.filter,
+    required this.count,
+    required this.empty,
+    required this.item,
+    this.sort,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return async.when(
+      loading: () => ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+        children: List.generate(
+            4,
+            (_) => const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: ShimmerImage(url: '', height: 112,
+                      borderRadius: BorderRadius.all(Radius.circular(24))),
+                )),
+      ),
+      error: (_, _) => EmptyNote(icon: Icons.cloud_off_rounded,
+          title: error),
+      data: (rows) {
+        final list = rows.where(filter).toList();
+        if (sort != null) list.sort(sort);
+        if (list.isEmpty) {
+          return ListView(children: [
+            EmptyNote(icon: Icons.search_off_rounded, title: empty),
+          ]);
         }
-        // Timket pinned first
-        final sorted = [...events]..sort((a, b) {
-          final at = a['includes_timket'] == true ? 0 : 1;
-          final bt = b['includes_timket'] == true ? 0 : 1;
-          return at.compareTo(bt);
-        });
         return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
           physics: const BouncingScrollPhysics(),
-          itemCount: sorted.length,
-          itemBuilder: (_, i) => _fadeIn(i,
-              _EventCard(event: sorted[i], lang: lang)),
+          itemCount: list.length + 1,
+          itemBuilder: (_, i) {
+            if (i == 0) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10, left: 4),
+                child: Text(count(list.length),
+                    style: const TextStyle(fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.muted)),
+              );
+            }
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: item(list[i - 1]),
+            );
+          },
         );
       },
     );
   }
 }
 
-Widget _fadeIn(int i, Widget child) => TweenAnimationBuilder<double>(
-  tween: Tween(begin: 0, end: 1),
-  duration: Duration(milliseconds: (250 + i * 60).clamp(250, 600)),
-  curve: Curves.easeOutCubic,
-  builder: (_, v, c) => Opacity(
-      opacity: v,
-      child: Transform.translate(offset: Offset(0, 20 * (1 - v)), child: c)),
-  child: child,
-);
-
-// ── Site card ─────────────────────────────────────────────────
-class _SiteCard extends StatelessWidget {
-  final Map<String, dynamic> site;
-  final String lang;
-  const _SiteCard({required this.site, required this.lang});
+// ── Row card: photo left, text right ──────────────────────────
+class _ListCard extends StatelessWidget {
+  final String photo, title, meta;
+  final String? price;
+  final IconData icon;
+  final bool verified;
+  final VoidCallback onTap;
+  const _ListCard({
+    required this.photo,
+    required this.icon,
+    required this.title,
+    required this.meta,
+    required this.onTap,
+    this.price,
+    this.verified = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final name = localName(site, lang);
-    final photo = sitePhoto(site);
-    final location = (site['location'] ?? '') as String;
-    final info = (site['info'] ?? '') as String;
-    final description = (site['description'] ?? '') as String;
-
-    return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(
-        builder: (_) => SiteDetailScreen(site: {
-          'id': site['id'], 'name': name, 'subtitle': info,
-          'location': location, 'image': photo,
-          'description': description, 'rating': '4.8',
-          'tag': '', 'audio': false,
-        }),
-      )),
+    return PressScale(
+      onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: AppColors.charcoal.withAlpha(14),
-              blurRadius: 16, offset: const Offset(0, 5))],
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Stack(children: [
-            ShimmerImage(url: photo, height: 185, width: double.infinity,
-                borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20)),
-                darkOverlay: true),
-            if (location.isNotEmpty)
-              Positioned(bottom: 12, left: 14, child: Row(children: [
-                const Icon(Icons.location_on, size: 13, color: AppColors.gold),
-                const SizedBox(width: 4),
-                Text(location, style: const TextStyle(color: Colors.white,
-                    fontSize: 12, fontWeight: FontWeight.w600,
-                    shadows: [Shadow(blurRadius: 6, color: Colors.black54)])),
-              ])),
-          ]),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-              Text(name, style: const TextStyle(fontSize: 17.5,
-                  fontWeight: FontWeight.w800, color: AppColors.charcoal)),
-              if (info.isNotEmpty) ...[
-                const SizedBox(height: 5),
-                Text(info, style: const TextStyle(fontSize: 12.5,
-                    color: AppColors.rust, fontWeight: FontWeight.w600)),
-              ],
-              if (description.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(description, maxLines: 3, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13,
-                        color: AppColors.textSecondary, height: 1.5)),
-              ],
-            ]),
+        padding: const EdgeInsets.all(10),
+        decoration: AppDecor.glass(radius: 24),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(
+            width: 96,
+            height: 96,
+            child: photo.isEmpty
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.stone,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Icon(icon, size: 32, color: const Color(0xFF8C8C8C)),
+                  )
+                : ShimmerImage(url: photo, width: 96, height: 96,
+                    borderRadius:
+                        const BorderRadius.all(Radius.circular(18))),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Row(children: [
+                  Flexible(
+                    child: Text(title,
+                        style: const TextStyle(fontSize: 16,
+                            fontWeight: FontWeight.w800, height: 1.25)),
+                  ),
+                  if (verified) ...[
+                    const SizedBox(width: 4),
+                    const VerifiedTick(size: 16),
+                  ],
+                ]),
+                if (meta.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(meta,
+                      maxLines: 2,
+                      style: const TextStyle(fontSize: 13,
+                          color: AppColors.muted)),
+                ],
+                if (price != null) ...[
+                  const SizedBox(height: 6),
+                  Text(price!,
+                      style: const TextStyle(fontSize: 15,
+                          fontWeight: FontWeight.w800)),
+                ],
+              ]),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Icon(Icons.chevron_right_rounded,
+                color: AppColors.muted),
           ),
         ]),
       ),
@@ -239,124 +474,86 @@ class _SiteCard extends StatelessWidget {
   }
 }
 
-// ── Event card ────────────────────────────────────────────────
-class _EventCard extends StatelessWidget {
+// ── Event row: calendar block + both calendars ─────────────────
+class _EventRow extends StatelessWidget {
   final Map<String, dynamic> event;
-  final String lang;
-  const _EventCard({required this.event, required this.lang});
+  final bool am;
+  final VoidCallback onTap;
+  const _EventRow({required this.event, required this.am, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final name = (event['name'] ?? '') as String;
-    final date = (event['date'] ?? '') as String;
-    final desc = (event['description'] ?? '') as String;
-    final photo = (event['photo'] ?? '') as String;
+    final rawDate = (event['date'] ?? '') as String;
+    final date = DateTime.tryParse(rawDate);
     final isTimket = event['includes_timket'] == true;
-    final am = isAm(lang);
+    final (line1, line2) = date != null ? dualDate(date, am) : (rawDate, '');
 
-    return GestureDetector(
-      onTap: () {
-        if (isTimket) {
-          // Timket is the only live event — open its full roadmap.
-          Navigator.push(context, MaterialPageRoute(
-              builder: (_) => TimketRoadmapScreen(lang: lang)));
-        } else {
-          // Other festivals are coming soon.
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: AppColors.charcoal,
-            behavior: SnackBarBehavior.floating,
-            content: Text(
-              am ? '$name — በቅርቡ ይመጣል' : '$name — full guide coming soon',
-              style: const TextStyle(color: AppColors.gold),
+    return PressScale(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: isTimket
+            ? AppDecor.night(radius: 24)
+            : AppDecor.glass(radius: 24),
+        child: Row(children: [
+          Container(
+            width: 56,
+            height: 60,
+            decoration: BoxDecoration(
+              color: isTimket ? Colors.white : AppColors.ink,
+              borderRadius: BorderRadius.circular(16),
             ),
-          ));
-        }
-      },
-      child: Opacity(
-        opacity: isTimket ? 1.0 : 0.85,
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: AppColors.charcoal.withAlpha(14),
-                blurRadius: 16, offset: const Offset(0, 5))],
-          ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-            Stack(children: [
-              ShimmerImage(url: photo, height: 175, width: double.infinity,
-                  borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20)),
-                  darkOverlay: true),
-              // Date chip
-              Positioned(top: 12, left: 14, child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 11, vertical: 6),
-                decoration: BoxDecoration(color: AppColors.gold,
-                    borderRadius: BorderRadius.circular(999)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.event, size: 12, color: AppColors.charcoal),
-                  const SizedBox(width: 5),
-                  Text(date, style: const TextStyle(color: AppColors.charcoal,
-                      fontSize: 11, fontWeight: FontWeight.w800)),
-                ]),
-              )),
-              // FEATURED (Timket) or SOON (everything else)
-              Positioned(top: 12, right: 14, child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                    color: isTimket ? AppColors.rust : AppColors.charcoal,
-                    borderRadius: BorderRadius.circular(999)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(isTimket ? Icons.push_pin : Icons.schedule,
-                      size: 11, color: Colors.white),
-                  const SizedBox(width: 4),
-                  Text(isTimket
-                          ? 'FEATURED'
-                          : (am ? 'በቅርቡ' : 'SOON'),
-                      style: const TextStyle(color: Colors.white,
-                          fontSize: 9, fontWeight: FontWeight.w800,
-                          letterSpacing: 1)),
-                ]),
-              )),
-              Positioned(bottom: 12, left: 16, right: 16, child: Text(name,
-                  maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 19,
-                      fontWeight: FontWeight.w900, letterSpacing: -0.4,
-                      shadows: [Shadow(blurRadius: 10,
-                          color: Colors.black54)]))),
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+              Text(date != null
+                  ? (am ? EthDate.fromGregorian(date).monthName(true)
+                      : _mon(date.month))
+                  : '—',
+                  style: TextStyle(fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: isTimket ? AppColors.ink : Colors.white)),
+              Text(date != null
+                  ? '${am ? EthDate.fromGregorian(date).day : date.day}'
+                  : '',
+                  style: TextStyle(fontSize: 22,
+                      fontWeight: FontWeight.w800, height: 1.1,
+                      color: isTimket ? AppColors.ink : Colors.white)),
             ]),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text(desc, maxLines: 3, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13,
-                        color: AppColors.textSecondary, height: 1.5)),
-                const SizedBox(height: 10),
-                Row(children: [
-                  Text(isTimket
-                          ? (am ? 'የመንገድ ካርታውን ይመልከቱ' : 'View the roadmap')
-                          : (am ? 'በቅርቡ ይመጣል' : 'Coming soon'),
-                      style: TextStyle(
-                          color: isTimket
-                              ? AppColors.rust : AppColors.textMuted,
-                          fontWeight: FontWeight.w700, fontSize: 12.5)),
-                  const SizedBox(width: 3),
-                  Icon(isTimket
-                          ? Icons.arrow_forward_rounded
-                          : Icons.schedule,
-                      size: 13,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+              Text(name,
+                  style: TextStyle(fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: isTimket ? Colors.white : AppColors.ink)),
+              const SizedBox(height: 3),
+              Text(line1,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
                       color: isTimket
-                          ? AppColors.rust : AppColors.textMuted),
-                ]),
-              ]),
-            ),
-          ]),
-        ),
+                          ? const Color(0xFFE6E6E6)
+                          : AppColors.ink700)),
+              if (line2.isNotEmpty)
+                Text(line2,
+                    style: TextStyle(fontSize: 13,
+                        color: isTimket
+                            ? AppColors.onDarkMuted
+                            : AppColors.muted)),
+            ]),
+          ),
+          Icon(Icons.chevron_right_rounded,
+              color: isTimket ? Colors.white : AppColors.muted),
+        ]),
       ),
     );
   }
+
+  static String _mon(int m) => const [
+        'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+        'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+      ][m - 1];
 }

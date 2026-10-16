@@ -1,75 +1,353 @@
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+// ═══════════════════════════════════════════════════════════════
+//  DESIGN SYSTEM v0.5 — "Black & white glass"
+//  Matches the Claude Design canvas "Gondar Tourism App — Design".
+//
+//  Neutrals carry the whole look. Colour is MEANING only:
+//   • SOS red     — SOS and danger, never errors or decoration
+//   • Safe green  — Safety Desk and "I'm safe" only
+//   • Amber       — pending / in review / warning zone
+//   • Blue        — confirmed / published / info
+//   • Verified    — the blue tick on approved partners
+//   • Clay        — form errors, failed payment
+// ═══════════════════════════════════════════════════════════════
 class AppColors {
-  // ── Burnt Orange & Charcoal palette ───────────────────
-  //  Warm, modern, premium. Vibrant orange accent on near-black
-  //  and dark brown, over a clean warm-white. `charcoal` is the
-  //  brand dark (near-black) for nav, buttons and headings;
-  //  `gold` is the orange accent used throughout.
-  static const charcoal     = Color(0xFF161316);  // near-black (primary dark)
-  static const gold         = Color(0xFFFF6D29);  // vibrant orange (accent)
-  static const rust         = Color(0xFFB5481F);  // burnt orange (secondary)
-  static const background   = Color(0xFFF7F4F1);  // clean warm white
+  // ── Brand / neutrals ──────────────────────────────────
+  static const ink      = Color(0xFF2B2B2B); // text, icons, main buttons
+  static const black    = Color(0xFF1C1C1C); // pressed, kicker text
+  static const ink700   = Color(0xFF3A3A3A); // body text, dark cards
+  static const muted    = Color(0xFF666666); // captions, meta
+  static const line     = Color(0xFFD4D4D4); // borders, dividers
+  static const stone    = Color(0xFFE9E9E9); // photo placeholders, wells
+  static const gray100  = Color(0xFFEBEBEB); // soft highlight, selected row
+  static const ground   = Color(0xFFF4F4F4); // app background
+  static const surface  = Color(0xFFFFFFFF); // cards, sheets
+  static const onDark   = Color(0xFFFFFFFF);
+  static const onDarkMuted = Color(0xFFB3B3B3);
 
-  // Derived tones
-  static const goldDark     = Color(0xFFD2541A);  // deeper orange text on light
-  static const goldDeep     = Color(0xFF2A1812);  // near-black-brown (text on orange)
-  static const bronze       = Color(0xFF453027);  // dark brown
-  static const amber        = Color(0xFFFF8A3C);
-  static const rustDark     = Color(0xFF7E3315);
-  static const darkBrown    = Color(0xFF453027);  // dark brown
-  static const nearBlack    = Color(0xFF161316);
+  // Night — headers, hero cards, dark tiles
+  static const night1 = Color(0xFF141414);
+  static const night2 = Color(0xFF232323);
+  static const night3 = Color(0xFF3A3A3A);
 
-  // Surface
-  static const surfaceBright        = Color(0xFFFFFFFF);
-  static const surfaceVariant       = Color(0xFFE7E3DF);
-  static const surfaceContainer     = Color(0xFFF1EDE9);
-  static const surfaceContainerHigh = Color(0xFFEAE5E0);
+  // ── Meaning — fixed, never decoration ─────────────────
+  static const sos         = Color(0xFFC4261D);
+  static const dangerTint  = Color(0xFFFCE5E3);
+  static const dangerInk   = Color(0xFFB3211A);
+  static const safe        = Color(0xFF1C6B3F);
+  static const safeTint    = Color(0xFFE2F1E7);
+  static const amberTint   = Color(0xFFFFF1CC);
+  static const amberInk    = Color(0xFF7A4F00);
+  static const infoTint    = Color(0xFFE3ECF6);
+  static const infoInk     = Color(0xFF24527F);
+  static const locationBlue = Color(0xFF2F6FB0);
+  static const verified    = Color(0xFF2158C4);
+  static const verifiedTint = Color(0xFFE1EAFB);
+  static const clayTint    = Color(0xFFFCEBDD);
+  static const clayInk     = Color(0xFF9A4114);
 
-  // Text — neutral & readable
-  static const onBackground  = Color(0xFF161316);
-  static const onSurface     = Color(0xFF161316);
-  static const textMuted     = Color(0xFF8C857F);
-  static const textSecondary = Color(0xFF524B45);
+  // ── Legacy names (older screens) → mapped onto v0.5 ───
+  static const charcoal     = ink;
+  static const gold         = black;   // old accent → black ink
+  static const rust         = ink700;
+  static const background   = ground;
+  static const goldDark     = black;
+  static const goldDeep     = black;
+  static const bronze       = ink700;
+  static const amber        = amberInk;
+  static const rustDark     = black;
+  static const darkBrown    = ink700;
+  static const nearBlack    = black;
+  static const surfaceBright        = surface;
+  static const surfaceVariant       = line;
+  static const surfaceContainer     = gray100;
+  static const surfaceContainerHigh = stone;
+  static const onBackground  = ink;
+  static const onSurface     = ink;
+  static const textMuted     = muted;
+  static const textSecondary = ink700;
+  static const error        = sos;
+  static const errorLight   = dangerTint;
+  static const green        = safe;
+  static const greenLight   = safeTint;
+}
 
-  // Status
-  static const error        = Color(0xFFBA1A1A);
-  static const errorLight   = Color(0xFFFFDAD6);
-  static const green        = Color(0xFF1F7A4D);  // success
-  static const greenLight   = Color(0xFFE3F3E9);
+/// Corners, spacing and shared decorations from the design.
+class AppRadius {
+  static const tag = 8.0, button = 12.0, card = 16.0, sheet = 24.0;
+  static const glass = 24.0, tile = 28.0, hero = 32.0;
+}
+
+class AppDecor {
+  /// Frosted white card: white 66% + blur, inner white hairline.
+  static BoxDecoration glass({double radius = AppRadius.glass}) =>
+      BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.66),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0F000000), blurRadius: 24,
+              offset: Offset(0, 8)),
+        ],
+      );
+
+  /// Solid white card with a faint outline.
+  static BoxDecoration card({double radius = AppRadius.glass}) =>
+      BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0F000000), blurRadius: 24,
+              offset: Offset(0, 8)),
+          BoxShadow(color: Color(0x12000000), spreadRadius: 1),
+        ],
+      );
+
+  /// Night gradient: hero cards, headers, dark tiles.
+  static BoxDecoration night({double radius = AppRadius.hero}) =>
+      BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.night1, AppColors.night2, AppColors.night3],
+          stops: [0, 0.6, 1],
+        ),
+        boxShadow: const [
+          BoxShadow(color: Color(0x4D000000), blurRadius: 40,
+              offset: Offset(0, 16)),
+        ],
+      );
+}
+
+/// Font families: Schibsted Grotesk for Latin, Noto Sans Ethiopic
+/// for Amharic (used automatically as the fallback).
+class AppFonts {
+  static String? get latin => GoogleFonts.schibstedGrotesk().fontFamily;
+  static String? get ethiopic => GoogleFonts.notoSansEthiopic().fontFamily;
+  static List<String> get fallback => [if (ethiopic != null) ethiopic!];
+
+  /// Button labels need the family spelled out: a ButtonStyle
+  /// textStyle replaces (not merges with) the theme's text style.
+  static TextStyle button(double size, [FontWeight w = FontWeight.w700]) =>
+      TextStyle(fontFamily: latin, fontFamilyFallback: fallback,
+          fontSize: size, fontWeight: w);
 }
 
 class AppTheme {
-  static ThemeData get theme => ThemeData(
-    useMaterial3: true,
-    scaffoldBackgroundColor: AppColors.background,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.charcoal,
-      surface: AppColors.background,
-    ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.background,
-      foregroundColor: AppColors.onBackground,
-      elevation: 0,
-      centerTitle: true,
-      titleTextStyle: TextStyle(
-        fontWeight: FontWeight.w700,
-        fontSize: 18,
-        color: AppColors.onBackground,
+  static ThemeData get theme {
+    final base = ThemeData(useMaterial3: true);
+    final fallback = [if (AppFonts.ethiopic != null) AppFonts.ethiopic!];
+    TextStyle btn(double size, [FontWeight w = FontWeight.w700]) => TextStyle(
+        fontFamily: AppFonts.latin, fontFamilyFallback: fallback,
+        fontSize: size, fontWeight: w);
+    final text = GoogleFonts.schibstedGroteskTextTheme(base.textTheme)
+        .apply(
+          bodyColor: AppColors.ink,
+          displayColor: AppColors.ink,
+          fontFamilyFallback: fallback,
+        );
+
+    return base.copyWith(
+      scaffoldBackgroundColor: AppColors.ground,
+      textTheme: text,
+      primaryTextTheme: text,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.ink,
+        primary: AppColors.ink,
+        onPrimary: Colors.white,
+        secondary: AppColors.black,
+        surface: AppColors.ground,
+        onSurface: AppColors.ink,
+        error: AppColors.clayInk,
       ),
-    ),
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: AppColors.charcoal,
-      selectedItemColor: AppColors.gold,
-      unselectedItemColor: Color(0xFF9A8C7C),
-      showUnselectedLabels: true,
-      type: BottomNavigationBarType.fixed,
-      selectedLabelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-      unselectedLabelStyle: TextStyle(fontSize: 11),
-    ),
-    pageTransitionsTheme: const PageTransitionsTheme(builders: {
-      TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
-      TargetPlatform.iOS: FadeForwardsPageTransitionsBuilder(),
-    }),
-  );
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.ground,
+        foregroundColor: AppColors.ink,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: text.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800, fontSize: 19,
+            color: AppColors.ink),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.ink,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(48, 52),
+          shape: const StadiumBorder(),
+          textStyle: btn(16),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.ink,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          minimumSize: const Size(48, 52),
+          shape: const StadiumBorder(),
+          textStyle: btn(16),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.ink,
+          minimumSize: const Size(48, 48),
+          side: const BorderSide(color: AppColors.ink, width: 1.5),
+          shape: const StadiumBorder(),
+          textStyle: btn(15),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.ink,
+          textStyle: btn(14, FontWeight.w800),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        hintStyle: const TextStyle(color: AppColors.muted),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          borderSide: const BorderSide(color: Color(0xFF8C8C8C)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          borderSide: const BorderSide(color: Color(0xFF8C8C8C)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          borderSide: const BorderSide(color: AppColors.ink, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          borderSide: const BorderSide(color: AppColors.clayInk),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: Colors.white,
+        selectedColor: AppColors.ink,
+        side: const BorderSide(color: Color(0xFF8C8C8C)),
+        shape: const StadiumBorder(),
+        labelStyle: const TextStyle(fontWeight: FontWeight.w600,
+            color: AppColors.ink),
+      ),
+      cardTheme: CardThemeData(
+        color: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.card)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheet))),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sheet)),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.ink,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.card)),
+      ),
+      progressIndicatorTheme:
+          const ProgressIndicatorThemeData(color: AppColors.ink),
+      dividerTheme:
+          const DividerThemeData(color: AppColors.stone, thickness: 1),
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+        TargetPlatform.iOS: FadeForwardsPageTransitionsBuilder(),
+      }),
+    );
+  }
+}
+
+/// Soft grey "glass" backdrop used behind every main screen.
+class GlassBackground extends StatelessWidget {
+  final Widget child;
+  const GlassBackground({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(color: AppColors.ground),
+      child: Stack(children: [
+        const Positioned.fill(child: IgnorePointer(child: _Glow())),
+        child,
+      ]),
+    );
+  }
+}
+
+class _Glow extends StatelessWidget {
+  const _Glow();
+  @override
+  Widget build(BuildContext context) {
+    Widget blob(Alignment a, Color c) => Align(
+          alignment: a,
+          child: FractionallySizedBox(
+            widthFactor: 1.1,
+            heightFactor: 0.5,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  colors: [c, c.withValues(alpha: 0)],
+                  stops: const [0, 0.7],
+                ),
+              ),
+            ),
+          ),
+        );
+    return Stack(children: [
+      blob(const Alignment(1.2, -1.1), const Color(0xFFCFCFCF)),
+      blob(const Alignment(-1.2, -0.05), const Color(0xFFD6D6D6)),
+      blob(const Alignment(1.2, 0.75), const Color(0xFFDCDCDC)),
+    ]);
+  }
+}
+
+/// Frosted glass panel (white 66% + 16px blur).
+class GlassPanel extends StatelessWidget {
+  final Widget child;
+  final double radius;
+  final EdgeInsetsGeometry? padding;
+  final bool blur;
+  const GlassPanel({
+    super.key,
+    required this.child,
+    this.radius = AppRadius.glass,
+    this.padding,
+    this.blur = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final box = Container(
+      padding: padding,
+      decoration: AppDecor.glass(radius: radius),
+      child: child,
+    );
+    if (!blur) return box;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: box,
+      ),
+    );
+  }
 }

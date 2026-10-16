@@ -112,11 +112,11 @@ class _BookingCard extends StatelessWidget {
     } catch (_) { date = (b['booking_date'] ?? '') as String; }
 
     final (statusColor, statusBg, statusLabel, statusIcon) = switch (status) {
-      'confirmed' || 'approved' => (AppColors.green, AppColors.greenLight,
+      'confirmed' || 'approved' => (AppColors.infoInk, AppColors.infoTint,
           am ? 'ተረጋግጧል' : 'Confirmed', Icons.check_circle),
-      'cancelled' || 'rejected' => (AppColors.error, AppColors.errorLight,
+      'cancelled' || 'rejected' => (AppColors.clayInk, AppColors.clayTint,
           am ? 'ተሰርዟል' : 'Cancelled', Icons.cancel),
-      _ => (const Color(0xFF9C7320), const Color(0xFFFBF1DC),
+      _ => (AppColors.amberInk, AppColors.amberTint,
           am ? 'በመጠባበቅ ላይ' : 'Pending', Icons.hourglass_top),
     };
     final isConfirmed = status == 'confirmed' || status == 'approved';

@@ -196,8 +196,8 @@ class _AlertBannerState extends State<_AlertBanner>
   @override
   Widget build(BuildContext context) {
     final anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
-    final bg = widget.urgent ? const Color(0xFFB3261E) : AppColors.charcoal;
-    final accent = widget.urgent ? Colors.white : AppColors.gold;
+    final bg = widget.urgent ? const Color(0xFFC4261D) : AppColors.charcoal;
+    final accent = widget.urgent ? Colors.white : Colors.white;
 
     return Positioned(
       top: 0, left: 0, right: 0,
@@ -221,7 +221,7 @@ class _AlertBannerState extends State<_AlertBanner>
                     border: widget.urgent
                         ? Border.all(color: Colors.white38)
                         : Border.all(
-                            color: AppColors.gold.withAlpha(70)),
+                            color: Colors.white.withAlpha(70)),
                     boxShadow: [BoxShadow(
                         color: Colors.black.withAlpha(90),
                         blurRadius: 20, offset: const Offset(0, 8))],
@@ -260,7 +260,7 @@ class _AlertBannerState extends State<_AlertBanner>
                               style: TextStyle(
                                   color: widget.urgent
                                       ? Colors.white
-                                      : const Color(0xFFE8DFD0),
+                                      : const Color(0xFFE9E9E9),
                                   fontSize: 12.5, height: 1.4)),
                         ],
                         const SizedBox(height: 4),

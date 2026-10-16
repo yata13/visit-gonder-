@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/ui.dart';
 import '../../providers/data_providers.dart';
 import '../../providers/language_provider.dart';
 import '../emergency/emergency_screen.dart';
@@ -78,7 +79,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// them in the Map Manager tab. Rows without coords are skipped.
   List<_MapPlace> _livePlaces(String lang) {
     final places = <_MapPlace>[];
-    for (final p in ref.watch(placesProvider).value ?? const []) {
+    for (final p in ref.watch(placesProvider).valueOrNull ?? const []) {
       final lat = p['lat'], lng = p['lng'];
       if (lat is! num || lng is! num) continue;
       places.add(_MapPlace(
@@ -106,7 +107,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     switch (s) {
       case 'low':      return const Color(0xFF4CAF50);
       case 'high':     return const Color(0xFFFF9800);
-      case 'critical': return const Color(0xFFD32F2F);
+      case 'critical': return const Color(0xFFC4261D);
       default:         return const Color(0xFFFFC107);
     }
   }
@@ -180,7 +181,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     onTap: () {
                       showDialog(context: context, builder: (_) => AlertDialog(
                         icon: const Icon(Icons.warning_amber_rounded,
-                            color: Colors.red, size: 32),
+                            color: AppColors.sos, size: 32),
                         title: Text(z['name'] ?? 'Danger Zone'),
                         content: Text(z['description'] ??
                             'This area is currently unsafe. Please avoid.'),
@@ -254,10 +255,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD32F2F),
+                  color: const Color(0xFFC4261D),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [BoxShadow(
-                    color: Colors.red.withAlpha(100),
+                    color: AppColors.sos.withAlpha(100),
                     blurRadius: 12, offset: const Offset(0, 4),
                   )],
                 ),
@@ -294,12 +295,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    Row(children: [
+                    if (Navigator.canPop(context)) ...[
+                      GlassCircleButton(
+                        icon: Icons.arrow_back_rounded,
+                        semanticLabel: 'Back',
+                        onTap: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
+                          horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(22),
                         boxShadow: [BoxShadow(
                             color: Colors.black.withAlpha(30),
                             blurRadius: 10)],
@@ -313,6 +323,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                 fontWeight: FontWeight.w700, fontSize: 14)),
                       ]),
                     ),
+                    ]),
 
                     // SOS Button
                     GestureDetector(
@@ -323,10 +334,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.sos,
+                          borderRadius: BorderRadius.circular(22),
                           boxShadow: [BoxShadow(
-                              color: Colors.red.withAlpha(120),
+                              color: AppColors.sos.withAlpha(120),
                               blurRadius: 12)],
                         ),
                         child: const Row(mainAxisSize: MainAxisSize.min,

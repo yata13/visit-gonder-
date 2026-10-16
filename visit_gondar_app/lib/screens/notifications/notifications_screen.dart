@@ -137,7 +137,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.charcoal,
-                foregroundColor: AppColors.gold,
+                foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -212,10 +212,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     ),
                     child: const Row(mainAxisSize: MainAxisSize.min,
                         children: [
-                      Icon(Icons.done_all, size: 15, color: AppColors.gold),
+                      Icon(Icons.done_all, size: 15, color: Colors.white),
                       SizedBox(width: 6),
                       Text('Mark all read',
-                          style: TextStyle(color: AppColors.gold,
+                          style: TextStyle(color: Colors.white,
                               fontWeight: FontWeight.w700, fontSize: 12.5)),
                     ]),
                   ),
@@ -334,7 +334,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: unread
-              ? const Color(0xFFFFF8E7)
+              ? const Color(0xFFF4F4F4)
               : AppColors.surfaceContainer,
           borderRadius: BorderRadius.circular(14),
         ),

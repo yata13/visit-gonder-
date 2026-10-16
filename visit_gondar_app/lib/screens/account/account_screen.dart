@@ -118,7 +118,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       child: Center(
                         child: Text(_initials,
                             style: const TextStyle(
-                                color: AppColors.gold,
+                                color: Colors.white,
                                 fontSize: 30,
                                 fontWeight: FontWeight.w800)),
                       ),
@@ -133,7 +133,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.verified, size: 14,
-                              color: AppColors.goldDeep),
+                              color: Colors.white),
                         ),
                       ),
                   ]),
@@ -151,7 +151,7 @@ class _AccountScreenState extends State<AccountScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Consumer(builder: (context, ref, _) {
-                  final tier = ref.watch(userTierProvider).value ?? UserTier.guest;
+                  final tier = ref.watch(userTierProvider).valueOrNull ?? UserTier.guest;
                   return _planCard(context, tier);
                 }),
               ),
@@ -197,7 +197,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     _menuItem(Icons.download_outlined, 'Offline downloads'),
                     _divider(),
                     _menuItem(Icons.emergency_outlined, 'Emergency help',
-                        iconColor: Colors.red),
+                        iconColor: AppColors.sos),
                     _divider(),
                     _menuItem(Icons.record_voice_over_outlined, 'Useful phrases'),
                     _divider(),
@@ -218,7 +218,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       if (mounted) setState(() {});
                     },
                     child: const Text('Sign Out',
-                        style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600,
+                        style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w600,
                             fontSize: 15)),
                   ),
                 ),
@@ -260,7 +260,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     color: premium ? AppColors.gold : AppColors.charcoal)),
             const SizedBox(height: 2),
             Text(subtitle, style: TextStyle(fontSize: 12.5,
-                color: premium ? const Color(0xFFB3A899) : AppColors.textMuted)),
+                color: premium ? const Color(0xFFB3B3B3) : AppColors.textMuted)),
           ])),
           Icon(Icons.chevron_right,
               color: premium ? AppColors.gold : AppColors.textMuted),
@@ -277,9 +277,9 @@ class _AccountScreenState extends State<AccountScreen> {
     final total = ((b['total_price'] ?? b['price'] ?? 0) as num).toDouble();
 
     final statusColor = switch (status) {
-      'approved' || 'confirmed' => AppColors.green,
-      'cancelled' => AppColors.error,
-      _ => AppColors.goldDark,
+      'approved' || 'confirmed' => AppColors.infoInk,
+      'cancelled' => AppColors.clayInk,
+      _ => AppColors.amberInk,
     };
 
     return Container(

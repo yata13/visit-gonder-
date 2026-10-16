@@ -144,7 +144,7 @@ class _GuideCard extends ConsumerWidget {
             width: 56, height: 56,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppColors.rust, AppColors.rustDark],
+                colors: [AppColors.ink700, AppColors.black],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
@@ -213,7 +213,7 @@ class _GuideCard extends ConsumerWidget {
               ))),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.charcoal,
-              foregroundColor: AppColors.gold,
+              foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 13),
               shape: RoundedRectangleBorder(

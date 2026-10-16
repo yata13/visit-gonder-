@@ -346,14 +346,14 @@ class _BookingScreenState extends State<BookingScreen> {
                 onPressed: _loading ? null : _confirmBooking,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.gold,
-                  foregroundColor: AppColors.charcoal,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _loading
                     ? const SizedBox(width: 20, height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2,
-                            color: AppColors.charcoal))
+                            color: Colors.white))
                     : const Text('Confirm Booking',
                         style: TextStyle(fontWeight: FontWeight.w700)),
               ),
@@ -488,7 +488,7 @@ class BookingConfirmedScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text('Booking #$ref',
-                      style: const TextStyle(color: AppColors.gold,
+                      style: const TextStyle(color: Colors.white,
                           fontWeight: FontWeight.w800,
                           fontSize: 13, letterSpacing: 1)),
                 ),
@@ -520,17 +520,17 @@ class BookingConfirmedScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFBF1DC),
+                  color: const Color(0xFFEBEBEB),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Row(
                     crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Icon(Icons.info_outline, size: 18, color: Color(0xFF9C7320)),
+                  Icon(Icons.info_outline, size: 18, color: Color(0xFF7A4F00)),
                   SizedBox(width: 10),
                   Expanded(child: Text(
                     'The hotel will confirm shortly. You can check the status any time under "My Bookings" — it updates the moment they confirm.',
                     style: TextStyle(fontSize: 12.5,
-                        color: Color(0xFF6D4C1F), height: 1.5),
+                        color: Color(0xFF3A3A3A), height: 1.5),
                   )),
                 ]),
               ),
@@ -545,7 +545,7 @@ class BookingConfirmedScreen extends StatelessWidget {
                           builder: (_) => const MyBookingsScreen())),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.gold,
-                    foregroundColor: AppColors.charcoal,
+                    foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),

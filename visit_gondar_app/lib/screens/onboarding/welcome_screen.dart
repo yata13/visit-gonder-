@@ -77,7 +77,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0x661C1410), Color(0xF21C1410)],
+              colors: [Color(0x661C1410), Color(0xF21C1C1C)],
             ),
           ),
         ),
@@ -93,15 +93,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.gold.withAlpha(36),
+                    color: Colors.white.withAlpha(36),
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
-                        color: AppColors.gold.withAlpha(110)),
+                        color: Colors.white.withAlpha(110)),
                   ),
                   child: Text(
                       am ? '🎉 በተሳካ ሁኔታ ተመዝግበዋል'
                          : '🎉 Account created',
-                      style: const TextStyle(color: AppColors.gold,
+                      style: const TextStyle(color: Colors.white,
                           fontSize: 11, fontWeight: FontWeight.w800,
                           letterSpacing: 0.8)),
                 )),
@@ -111,7 +111,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   style: const TextStyle(
                     fontSize: 40, height: 1.12,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFFFBF7F0),
+                    color: Color(0xFFFFFFFF),
                     letterSpacing: -1.0,
                   ),
                 )),
@@ -120,7 +120,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   am ? 'በመተግበሪያው የሚያገኙት ይህ ነው'
                      : 'Here is what you get with this app',
                   style: const TextStyle(fontSize: 14.5,
-                      color: Color(0xFFB3A899), height: 1.5),
+                      color: Color(0xFFB3B3B3), height: 1.5),
                 )),
                 const SizedBox(height: 24),
 
@@ -131,18 +131,18 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                       Container(
                         width: 38, height: 38,
                         decoration: BoxDecoration(
-                          color: AppColors.gold.withAlpha(30),
+                          color: Colors.white.withAlpha(30),
                           borderRadius: BorderRadius.circular(11),
                           border: Border.all(
-                              color: AppColors.gold.withAlpha(70)),
+                              color: Colors.white.withAlpha(70)),
                         ),
                         child: Icon(e.value.$1,
-                            color: AppColors.gold, size: 18),
+                            color: Colors.white, size: 18),
                       ),
                       const SizedBox(width: 13),
                       Expanded(child: Text(e.value.$2,
                           style: const TextStyle(
-                              color: Color(0xFFEFE6D8),
+                              color: Color(0xFFE6E6E6),
                               fontSize: 14.5,
                               fontWeight: FontWeight.w600,
                               height: 1.4))),
@@ -159,8 +159,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                         MaterialPageRoute(
                             builder: (_) => const MainNavigation())),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.gold,
-                      foregroundColor: AppColors.charcoal,
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.ink,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),

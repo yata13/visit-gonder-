@@ -50,7 +50,7 @@ class TimketRoadmapScreen extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Color(0x551C1410), Color(0xF21C1410)],
+                      colors: [Color(0x551C1410), Color(0xF21C1C1C)],
                     ),
                   ),
                 ),
@@ -72,7 +72,7 @@ class TimketRoadmapScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(am ? 'የጥምቀት መንገድ ካርታ' : 'Timket Roadmap',
-                        style: const TextStyle(color: Color(0xFFFBF7F0),
+                        style: const TextStyle(color: Color(0xFFFFFFFF),
                             fontSize: 28, fontWeight: FontWeight.w900,
                             letterSpacing: -0.6)),
                   ]),
@@ -124,11 +124,11 @@ class _MomentTile extends StatelessWidget {
         // ── Timeline rail ──
         Column(children: [
           Container(width: 2, height: 6,
-              color: isFirst ? Colors.transparent : const Color(0xFF5A4A3A)),
+              color: isFirst ? Colors.transparent : const Color(0xFF3A3A3A)),
           Container(
             width: 30, height: 30,
             decoration: BoxDecoration(
-              color: AppColors.gold,
+              color: Colors.white,
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.charcoal, width: 3),
             ),
@@ -140,7 +140,7 @@ class _MomentTile extends StatelessWidget {
           ),
           if (!isLast)
             Expanded(child: Container(width: 2,
-                color: const Color(0xFF5A4A3A))),
+                color: const Color(0xFF3A3A3A))),
         ]),
         const SizedBox(width: 14),
 
@@ -158,12 +158,12 @@ class _MomentTile extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                 Text(fmt.format(phase.start).toUpperCase(),
-                    style: const TextStyle(color: AppColors.gold,
+                    style: const TextStyle(color: Colors.white,
                         fontSize: 10.5, fontWeight: FontWeight.w800,
                         letterSpacing: 1)),
                 const SizedBox(height: 6),
                 Text(phase.title(lang),
-                    style: const TextStyle(color: Color(0xFFFBF7F0),
+                    style: const TextStyle(color: Color(0xFFFFFFFF),
                         fontSize: 16.5, fontWeight: FontWeight.w800,
                         height: 1.3)),
                 const SizedBox(height: 6),
@@ -172,24 +172,24 @@ class _MomentTile extends StatelessWidget {
                       size: 12, color: AppColors.rust),
                   const SizedBox(width: 4),
                   Expanded(child: Text(phase.location(lang),
-                      style: const TextStyle(color: Color(0xFFD8CDBC),
+                      style: const TextStyle(color: Color(0xFFCCCCCC),
                           fontSize: 12.5))),
                 ]),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
-                    color: AppColors.gold.withAlpha(20),
+                    color: Colors.white.withAlpha(20),
                     borderRadius: BorderRadius.circular(11),
-                    border: Border.all(color: AppColors.gold.withAlpha(60)),
+                    border: Border.all(color: Colors.white.withAlpha(60)),
                   ),
                   child: Row(crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                     const Icon(Icons.tips_and_updates_outlined,
-                        size: 15, color: AppColors.gold),
+                        size: 15, color: Colors.white),
                     const SizedBox(width: 8),
                     Expanded(child: Text(phase.stand(lang),
-                        style: const TextStyle(color: Color(0xFFEFE6D8),
+                        style: const TextStyle(color: Color(0xFFE6E6E6),
                             fontSize: 12.5, height: 1.5))),
                   ]),
                 ),

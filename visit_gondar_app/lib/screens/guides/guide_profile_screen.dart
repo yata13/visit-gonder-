@@ -46,7 +46,7 @@ class GuideProfileScreen extends StatelessWidget {
                           width: 110, height: 110,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                                colors: [AppColors.rust, AppColors.rustDark]),
+                                colors: [AppColors.ink700, AppColors.black]),
                             borderRadius: BorderRadius.circular(28),
                           ),
                           child: Center(
@@ -67,7 +67,7 @@ class GuideProfileScreen extends StatelessWidget {
                   if (licensed) ...[
                     const SizedBox(width: 8),
                     const Icon(Icons.verified,
-                        size: 20, color: AppColors.gold),
+                        size: 20, color: Colors.white),
                   ],
                 ]),
                 if (specialty.isNotEmpty) ...[
@@ -97,13 +97,13 @@ class GuideProfileScreen extends StatelessWidget {
                   Column(crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                     const Text('Guide fee, per day',
-                        style: TextStyle(color: Color(0xFF8A7E70),
+                        style: TextStyle(color: Color(0xFF8C8C8C),
                             fontSize: 12)),
                     const SizedBox(height: 2),
                     Text('\$${price.toStringAsFixed(0)}',
                         style: const TextStyle(fontSize: 28,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.gold)),
+                            color: Colors.white)),
                   ]),
                   const Spacer(),
                   if (licensed)
@@ -111,18 +111,18 @@ class GuideProfileScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 7),
                       decoration: BoxDecoration(
-                        color: AppColors.gold.withAlpha(30),
+                        color: Colors.white.withAlpha(30),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                            color: AppColors.gold.withAlpha(80)),
+                            color: Colors.white.withAlpha(80)),
                       ),
                       child: const Row(mainAxisSize: MainAxisSize.min,
                           children: [
                         Icon(Icons.shield_outlined,
-                            size: 13, color: AppColors.gold),
+                            size: 13, color: Colors.white),
                         SizedBox(width: 5),
                         Text('LICENSED',
-                            style: TextStyle(color: AppColors.gold,
+                            style: TextStyle(color: Colors.white,
                                 fontSize: 10, fontWeight: FontWeight.w800,
                                 letterSpacing: 1.2)),
                       ]),
@@ -175,13 +175,12 @@ class GuideProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border.all(
-                      color: AppColors.gold.withAlpha(100)),
+                  border: Border.all(color: AppColors.line),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Row(children: [
                   Icon(Icons.verified_user_outlined,
-                      color: AppColors.goldDark, size: 20),
+                      color: AppColors.verified, size: 20),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -204,14 +203,16 @@ class GuideProfileScreen extends StatelessWidget {
             child: GestureDetector(
               onTap: () => Navigator.maybePop(context),
               child: Container(
-                padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.surfaceVariant),
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: Color(0x29000000),
+                      blurRadius: 8, offset: Offset(0, 2))],
                 ),
-                child: const Icon(Icons.arrow_back,
-                    size: 18, color: AppColors.charcoal),
+                child: const Icon(Icons.arrow_back_rounded,
+                    size: 22, color: AppColors.charcoal),
               ),
             ),
           ),
@@ -243,7 +244,7 @@ class GuideProfileScreen extends StatelessWidget {
                   ))),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.charcoal,
-                  foregroundColor: AppColors.gold,
+                  foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),

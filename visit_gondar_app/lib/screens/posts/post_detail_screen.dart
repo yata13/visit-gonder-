@@ -72,7 +72,7 @@ class PostDetailScreen extends StatelessWidget {
                     ),
                     child: const Center(
                       child: Text('VG',
-                          style: TextStyle(color: AppColors.gold,
+                          style: TextStyle(color: Colors.white,
                               fontWeight: FontWeight.w800, fontSize: 14)),
                     ),
                   ),

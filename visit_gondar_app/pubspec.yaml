@@ -1,7 +1,7 @@
 name: visit_gondar
 description: "Visit Gondar — Tourism app for Gondar, Ethiopia"
 publish_to: 'none'
-version: 1.4.0+5
+version: 1.5.0+6
 
 environment:
   sdk: ^3.12.1
@@ -20,6 +20,7 @@ dependencies:
   # --- UI ---
   cached_network_image: ^3.4.1   # Cache images from network
   shimmer: ^3.0.0                # Loading skeleton effect
+  google_fonts: ^6.2.1           # Schibsted Grotesk + Noto Sans Ethiopic
   timeago: ^3.7.0                # "2 min ago" formatting
 
   # --- Maps ---
