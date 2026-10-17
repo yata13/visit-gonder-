@@ -33,7 +33,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     ('Full day-by-day planner', 'ሙሉ የቀን በቀን እቅድ'),
     ('Offline guide packs + audio guides', 'ከመስመር ውጭ መመሪያዎች + የድምጽ መመሪያ'),
     ('Priority booking help', 'ቅድሚያ የቦታ ማስያዝ እርዳታ'),
-    ('Virtual tours (later phase)', 'ምናባዊ ጉብኝት (በቀጣይ ምዕራፍ)'),
+    ('Virtual tour of Fasil Ghebbi', 'የፋሲል ግቢ ምናባዊ ጉብኝት'),
   ];
 
   Future<void> _request() async {

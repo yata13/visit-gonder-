@@ -13,6 +13,7 @@ import '../../providers/data_providers.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/passport_provider.dart';
 import '../../providers/weather_provider.dart';
+import '../../providers/tier_provider.dart';
 import '../../services/weather_service.dart';
 import '../../widgets/shimmer_image.dart';
 import '../../widgets/ui.dart';
@@ -134,6 +135,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(weatherProvider);
+              ref.invalidate(userTierProvider); // e.g. just made Premium
               ref.invalidate(passportCheckpointsProvider);
               ref.invalidate(myCheckinsProvider);
               await _loadUnreadCount();
@@ -782,11 +784,13 @@ class _CityNews extends ConsumerWidget {
     Widget row(Map<String, dynamic> p, {required bool notice}) {
       final created = DateTime.tryParse((p['created_at'] ?? '') as String);
       final when = created == null ? '' : timeago.format(created);
+      final photo = (p['photo'] ?? '') as String;
+      final body = postField(p, 'body', lang);
       return PressScale(
         onTap: () =>
             pushScreen(context, PostDetailScreen(post: p, lang: lang)),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          clipBehavior: Clip.antiAlias,
           decoration: notice
               ? BoxDecoration(
                   gradient: const LinearGradient(
@@ -794,33 +798,58 @@ class _CityNews extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(24),
                 )
               : AppDecor.glass(radius: 24),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: notice ? AppColors.ink : AppColors.stone,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                  notice ? Icons.campaign_outlined : Icons.article_outlined,
-                  size: 20,
-                  color: notice ? Colors.white : AppColors.black),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+            // The post photo shows right in the card — no extra tap.
+            if (photo.isNotEmpty)
+              ShimmerImage(url: photo, height: 180,
+                  borderRadius: BorderRadius.zero),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                if (notice) Kicker(am ? 'ማስታወቂያ' : 'Notice'),
-                Text(postField(p, 'title', lang),
-                    style: const TextStyle(fontSize: 15,
-                        fontWeight: FontWeight.w700)),
-                if (when.isNotEmpty)
-                  Text(when,
-                      style: TextStyle(fontSize: 13,
-                          color: notice ? AppColors.black
-                              : AppColors.muted)),
+                if (photo.isEmpty) ...[
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: notice ? AppColors.ink : AppColors.stone,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                        notice ? Icons.campaign_outlined
+                            : Icons.article_outlined,
+                        size: 20,
+                        color: notice ? Colors.white : AppColors.black),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    if (notice) Kicker(am ? 'ማስታወቂያ' : 'Notice'),
+                    Text(postField(p, 'title', lang),
+                        style: const TextStyle(fontSize: 16,
+                            fontWeight: FontWeight.w800)),
+                    if (body.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(body,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 14,
+                              height: 1.4, color: AppColors.ink700)),
+                    ],
+                    if (when.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(when,
+                          style: const TextStyle(fontSize: 13,
+                              color: AppColors.muted)),
+                    ],
+                  ]),
+                ),
               ]),
             ),
           ]),
@@ -836,9 +865,9 @@ class _CityNews extends ConsumerWidget {
       ),
       const SizedBox(height: 4),
       row(posts.first, notice: true),
-      if (posts.length > 1) ...[
+      for (final p in posts.skip(1).take(2)) ...[
         const SizedBox(height: 10),
-        row(posts[1], notice: false),
+        row(p, notice: false),
       ],
     ]);
   }
