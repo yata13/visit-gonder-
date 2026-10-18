@@ -74,7 +74,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 const SizedBox(height: 20),
 
                 // ── Cover image ──
-                Expanded(
+                SizedBox(
+                  height: MediaQuery.sizeOf(context).height * 0.34,
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(AppRadius.hero),
@@ -122,7 +123,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         : 'Your pocket guide to the Camelot of Africa',
                     style: const TextStyle(fontSize: 16, height: 1.5,
                         color: AppColors.ink700)),
-                const SizedBox(height: 18),
+                const Spacer(),
 
                 FilledButton(
                   onPressed: () => pushScreen(context, const SignupScreen()),
@@ -145,11 +146,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 const SizedBox(height: 8),
               ]),
             ),
-          ),
-          Positioned(
-            right: 36,
-            top: MediaQuery.paddingOf(context).top + 92,
-            child: const SosButton(),
           ),
         ]),
       ),

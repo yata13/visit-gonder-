@@ -351,23 +351,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ]),
                       ),
                     ),
-                    const SizedBox(width: 8),
-
-                    // Zoom buttons
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(
-                            color: Colors.black.withAlpha(30),
-                            blurRadius: 10)],
-                      ),
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                        _zoomBtn(Icons.add, 1),
-                        const Divider(height: 1),
-                        _zoomBtn(Icons.remove, -1),
-                      ]),
-                    ),
                   ],
                 ),
               ),
@@ -383,6 +366,30 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ...presentCategories.map((c) =>
                       _chip(_categoryLabel(c), c, _pinIcon(c))),
                 ]),
+              ),
+
+              const SizedBox(height: 10),
+
+              // Zoom buttons — below the filter chips so they never overlap
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(
+                          color: Colors.black.withAlpha(30),
+                          blurRadius: 10)],
+                    ),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      _zoomBtn(Icons.add, 1),
+                      const Divider(height: 1),
+                      _zoomBtn(Icons.remove, -1),
+                    ]),
+                  ),
+                ),
               ),
             ],
           ),
