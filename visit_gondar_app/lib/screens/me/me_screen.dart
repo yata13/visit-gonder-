@@ -17,6 +17,8 @@ import '../emergency/emergency_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../premium/premium_screen.dart';
+import '../ai/ask_gondar_screen.dart';
+import '../tour/virtual_tour_screen.dart';
 import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
@@ -50,6 +52,11 @@ class MeScreen extends ConsumerWidget {
       if (user != null)
         (Icons.manage_accounts_outlined, am ? 'መለያ' : 'Account',
             () => pushScreen(context, const AccountScreen())),
+      (Icons.threesixty_rounded,
+          am ? 'የፋሲል ግቢ ምናባዊ ጉብኝት' : 'Virtual tour · Fasil Ghebbi',
+          () => pushScreen(context, const VirtualTourScreen())),
+      (Icons.auto_awesome_outlined, am ? 'AI ይጠይቁ' : 'Ask Gondar AI',
+          () => pushScreen(context, const AskGondarScreen())),
       (Icons.health_and_safety_outlined, am ? 'ደህንነት እና SOS' : 'Safety & SOS',
           () => pushScreen(context, const EmergencyScreen())),
       (Icons.help_outline_rounded, am ? 'እርዳታ' : 'Help',

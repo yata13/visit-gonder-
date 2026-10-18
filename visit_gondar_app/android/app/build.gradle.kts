@@ -51,7 +51,16 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // Use the real release key when android/key.properties exists
+            // (it is git-ignored). On a fresh clone without it, fall back
+            // to the debug key so `flutter build apk --release` still works
+            // for testing. Phones may then need the old app uninstalled
+            // first, because the signature is different.
+            signingConfig =
+                if (keystoreProperties.getProperty("storeFile") != null)
+                    signingConfigs.getByName("release")
+                else
+                    signingConfigs.getByName("debug")
         }
     }
 }

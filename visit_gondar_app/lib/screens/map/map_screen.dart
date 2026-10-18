@@ -17,7 +17,10 @@ import '../../widgets/motion.dart';
 //  "Get Directions" opens the place in Google Maps.
 // ═══════════════════════════════════════════════════════════════
 class MapScreen extends ConsumerStatefulWidget {
-  const MapScreen({super.key});
+  /// true when shown inside the Explore tab: no title / SOS pill (the
+  /// floating SOS is already there) and room for the tab bar.
+  final bool embedded;
+  const MapScreen({super.key, this.embedded = false});
   @override
   ConsumerState<MapScreen> createState() => _MapScreenState();
 }
@@ -121,6 +124,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ? all
         : all.where((p) => p.category == _activeFilter).toList();
     // Only offer filter chips for categories that actually have pins.
+    // Embedded: also clear the floating SOS button (60px + gap).
+    final bottomPad = MediaQuery.paddingOf(context).bottom +
+        (widget.embedded ? 76 : 0);
     final presentCategories = kPlaceCategories
         .where((c) => all.any((p) => p.category == c))
         .toList();
@@ -249,7 +255,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         // ── DANGER ZONE BANNER ──
         if (_showDangerBanner)
           Positioned(
-            bottom: 100, left: 16, right: 16,
+            bottom: 100 + bottomPad, left: 16, right: 16,
             child: GestureDetector(
               onTap: () => setState(() => _showDangerBanner = false),
               child: Container(
@@ -291,11 +297,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
+              // Inside Explore the page header already shows the title,
+              // so the map starts straight with the filter chips.
+              if (!widget.embedded) Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    if (widget.embedded) const Spacer() else
                     Row(children: [
                     if (Navigator.canPop(context)) ...[
                       GlassCircleButton(
@@ -327,7 +336,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ]),
 
                     // SOS Button
-                    GestureDetector(
+                    if (!widget.embedded) GestureDetector(
                       onTap: () => Navigator.push(context,
                           SmoothPageRoute(
                               builder: (_) => const EmergencyScreen())),
@@ -398,8 +407,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
         // ── RECENTER BUTTON ──
         Positioned(
-          right: 16,
-          bottom: _selectedPlace != null ? 220 : 30,
+          // Embedded: left side, so it never sits under the SOS button.
+          left: widget.embedded ? 16 : null,
+          right: widget.embedded ? null : 16,
+          bottom: (_selectedPlace != null ? 220 : 30) + bottomPad,
           child: FloatingActionButton.small(
             heroTag: 'recenter',
             onPressed: () => _mapController.move(_center, 14.5),
@@ -413,7 +424,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         // ── SELECTED PLACE CARD ──
         if (_selectedPlace != null)
           Positioned(
-            bottom: 0, left: 0, right: 0,
+            bottom: bottomPad, left: 0, right: 0,
             child: Container(
               margin: const EdgeInsets.all(12),
               padding: const EdgeInsets.all(16),

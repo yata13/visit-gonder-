@@ -28,6 +28,7 @@ class ExploreScreen extends ConsumerStatefulWidget {
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   late ExploreCategory _cat = widget.initial;
+  bool _showMap = true; // the map is the first thing visitors see
   final _search = TextEditingController();
   String _query = '';
 
@@ -77,27 +78,19 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.4)),
                 ),
-                PressScale(
-                  onTap: () => pushScreen(context, const MapScreen()),
-                  child: Container(
-                    height: 44,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.ink,
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.map_outlined,
-                          color: Colors.white, size: 18),
-                      const SizedBox(width: 6),
-                      Text(am ? 'ካርታ' : 'Map',
-                          style: const TextStyle(color: Colors.white,
-                              fontSize: 14, fontWeight: FontWeight.w800)),
-                    ]),
-                  ),
+                _ViewToggle(
+                  showMap: _showMap,
+                  am: am,
+                  onChanged: (v) => setState(() => _showMap = v),
                 ),
               ]),
             ),
+            if (_showMap) ...[
+              const SizedBox(height: 12),
+              const Expanded(
+                child: ClipRect(child: MapScreen(embedded: true)),
+              ),
+            ] else ...[
             const SizedBox(height: 14),
 
             // ── Search ───────────────────────────────────────
@@ -175,6 +168,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 ),
               ),
             ),
+            ],
           ])),
         ),
       ),
@@ -303,6 +297,55 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               onTap: () => openEvent(context, e, lang)),
         );
     }
+  }
+}
+
+// ── Map / List switch ─────────────────────────────────────────
+class _ViewToggle extends StatelessWidget {
+  final bool showMap, am;
+  final ValueChanged<bool> onChanged;
+  const _ViewToggle(
+      {required this.showMap, required this.am, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget option(bool map, IconData icon, String label) {
+      final on = showMap == map;
+      return Semantics(
+        selected: on,
+        button: true,
+        child: GestureDetector(
+          onTap: () => onChanged(map),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: on ? AppColors.ink : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(icon, size: 18,
+                  color: on ? Colors.white : AppColors.ink),
+              const SizedBox(width: 6),
+              Text(label,
+                  style: TextStyle(fontSize: 14,
+                      fontWeight: on ? FontWeight.w800 : FontWeight.w600,
+                      color: on ? Colors.white : AppColors.ink)),
+            ]),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: AppDecor.glass(radius: 22),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        option(true, Icons.map_outlined, am ? 'ካርታ' : 'Map'),
+        option(false, Icons.view_list_rounded, am ? 'ዝርዝር' : 'List'),
+      ]),
+    );
   }
 }
 

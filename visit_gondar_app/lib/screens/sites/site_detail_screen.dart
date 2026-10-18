@@ -10,6 +10,7 @@ import '../../widgets/ui.dart';
 import '../ai/ask_gondar_screen.dart';
 import '../auth/login_screen.dart';
 import '../passport/passport_screen.dart';
+import '../tour/virtual_tour_screen.dart';
 import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
@@ -180,6 +181,46 @@ class SiteDetailScreen extends ConsumerWidget {
                         ),
                         const Icon(Icons.chevron_right_rounded,
                             color: Colors.white),
+                      ]),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ── Virtual tour (Premium) ──────────────────
+                  PressScale(
+                    onTap: () =>
+                        pushScreen(context, const VirtualTourScreen()),
+                    child: GlassPanel(
+                      radius: 22,
+                      padding: const EdgeInsets.all(14),
+                      child: Row(children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: AppColors.ink,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Icon(Icons.threesixty_rounded,
+                              color: Colors.white),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                            Text(am ? 'የፋሲል ግቢ ምናባዊ ጉብኝት'
+                                    : 'Virtual tour of Fasil Ghebbi',
+                                style: const TextStyle(fontSize: 15,
+                                    fontWeight: FontWeight.w800)),
+                            Text(am ? 'ፕሪሚየም · 7 ቦታዎች'
+                                    : 'Premium · 7 stops',
+                                style: const TextStyle(fontSize: 13,
+                                    color: AppColors.muted)),
+                          ]),
+                        ),
+                        const Icon(Icons.chevron_right_rounded,
+                            color: AppColors.muted),
                       ]),
                     ),
                   ),
