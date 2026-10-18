@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../booking/booking_screen.dart';
+import '../../widgets/motion.dart';
 
 class HotelDetailScreen extends StatelessWidget {
   final Map hotel;
@@ -14,7 +15,7 @@ class HotelDetailScreen extends StatelessWidget {
       body: Stack(
         children: [
           SingleChildScrollView(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: Reveal.stagger([
               // Hero image
               Stack(children: [
                 Image.network(hotel['image'], height: 280,
@@ -113,7 +114,7 @@ class HotelDetailScreen extends StatelessWidget {
                   const SizedBox(height: 100),
                 ]),
               ),
-            ]),
+            ])),
           ),
 
           // Bottom booking bar
@@ -137,7 +138,7 @@ class HotelDetailScreen extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => BookingScreen(
+                      SmoothPageRoute(builder: (_) => BookingScreen(
                         type:           'hotel',
                         referenceId:    hotel['id']?.toString() ?? '',
                         referenceName:  hotel['name'],

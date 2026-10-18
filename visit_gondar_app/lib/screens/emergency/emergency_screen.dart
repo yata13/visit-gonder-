@@ -8,6 +8,7 @@ import '../../providers/language_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/supabase_service.dart';
 import '../../services/location_service.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  EMERGENCY / SOS — design "SOS · hold to send".
@@ -302,7 +303,7 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-            children: [
+            children: Reveal.stagger([
               Text(
                   am
                       ? 'ቀዩን ቁልፍ ለ3 ሰከንድ ይያዙ። አካባቢዎን ለደህንነት ዴስክ እንልካለን።'
@@ -410,7 +411,7 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
                 onPressed: () => _call('939'),
                 child: Text(am ? 'የእሳት አደጋ 939 ይደውሉ' : 'Fire brigade: call 939'),
               ),
-            ],
+            ]),
           ),
         ),
       ]),

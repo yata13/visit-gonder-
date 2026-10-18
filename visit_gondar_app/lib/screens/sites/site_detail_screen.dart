@@ -10,6 +10,7 @@ import '../../widgets/ui.dart';
 import '../ai/ask_gondar_screen.dart';
 import '../auth/login_screen.dart';
 import '../passport/passport_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  SITE DETAIL — design "Site detail · Fasil Ghebbi".
@@ -53,7 +54,7 @@ class SiteDetailScreen extends ConsumerWidget {
         child: Stack(children: [
           ListView(
             padding: EdgeInsets.only(bottom: 120 + bottomInset),
-            children: [
+            children: Reveal.stagger([
               // ── Photo ─────────────────────────────────────
               SizedBox(
                 height: 300,
@@ -231,7 +232,7 @@ class SiteDetailScreen extends ConsumerWidget {
                   ),
                 ]),
               ),
-            ],
+            ]),
           ),
 
           // ── Bottom actions ─────────────────────────────────

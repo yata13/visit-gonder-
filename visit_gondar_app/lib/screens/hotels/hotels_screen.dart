@@ -7,6 +7,7 @@ import '../../widgets/shimmer_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/ui.dart';
 import '../booking/booking_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  HOTELS — live from the same Supabase `hotels` table the admin
@@ -391,7 +392,7 @@ class HotelDetailPage extends ConsumerWidget {
                       width: 135,
                       child: ElevatedButton(
                         onPressed: () => Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => BookingScreen(
+                          SmoothPageRoute(builder: (_) => BookingScreen(
                             type: 'hotel',
                             referenceId: hotel['id'].toString(),
                             referenceName: name,

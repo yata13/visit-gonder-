@@ -8,6 +8,7 @@ import '../../providers/tier_provider.dart';
 import '../../theme/app_theme.dart';
 import '../ai/ask_gondar_screen.dart';
 import '../premium/premium_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  ACCOUNT — real profile from Supabase auth, real bookings from
@@ -178,7 +179,10 @@ class _AccountScreenState extends State<AccountScreen> {
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             itemCount: _bookings.length,
-                            itemBuilder: (_, i) => _bookingCard(_bookings[i]),
+                            itemBuilder: (_, i) => Reveal(
+                              delay: Motion.stagger(i),
+                              child: _bookingCard(_bookings[i]),
+                            ),
                           ),
               ),
               const SizedBox(height: 24),
@@ -238,7 +242,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ? 'Premium request sent — waiting for approval'
             : 'Upgrade for Ask Gondar AI, offline packs and more';
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(
+      onTap: () => Navigator.push(context, SmoothPageRoute(
           builder: (_) =>
               premium ? const AskGondarScreen() : const PremiumScreen())),
       child: Container(

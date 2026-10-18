@@ -9,6 +9,7 @@ import '../../widgets/ui.dart';
 import '../../providers/data_providers.dart';
 import '../../providers/language_provider.dart';
 import '../emergency/emergency_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  MAP — every pin comes from the live database (hotels + sites
@@ -328,7 +329,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     // SOS Button
                     GestureDetector(
                       onTap: () => Navigator.push(context,
-                          MaterialPageRoute(
+                          SmoothPageRoute(
                               builder: (_) => const EmergencyScreen())),
                       child: Container(
                         padding: const EdgeInsets.symmetric(

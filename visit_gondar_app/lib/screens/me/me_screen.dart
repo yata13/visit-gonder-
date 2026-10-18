@@ -17,6 +17,7 @@ import '../emergency/emergency_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../premium/premium_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  ME (tab 5) — design "Me". Profile, plan, menu, language, log out.
@@ -62,7 +63,7 @@ class MeScreen extends ConsumerWidget {
           bottom: false,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 130),
-            children: [
+            children: Reveal.stagger([
               // ── Profile ─────────────────────────────────────
               Row(children: [
                 Container(
@@ -260,7 +261,7 @@ class MeScreen extends ConsumerWidget {
                       if (!context.mounted) return;
                       Navigator.of(context, rootNavigator: true)
                           .pushAndRemoveUntil(
-                              MaterialPageRoute(
+                              SmoothPageRoute(
                                   builder: (_) => const OnboardingScreen()),
                               (_) => false);
                     },
@@ -274,7 +275,7 @@ class MeScreen extends ConsumerWidget {
                     style: const TextStyle(fontSize: 13,
                         color: AppColors.muted)),
               ),
-            ],
+            ]),
           ),
         ),
       ),

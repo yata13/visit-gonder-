@@ -9,6 +9,7 @@ import '../timket/timket_roadmap.dart';
 import '../../providers/weather_provider.dart';
 import '../../services/weather_service.dart';
 import '../../widgets/weather_card.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  TRIP PLANNER — the visitor answers 3 questions and the app
@@ -89,7 +90,7 @@ class _TripPlannerScreenState extends ConsumerState<TripPlannerScreen> {
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
-      children: [
+      children: Reveal.stagger([
         Text(am
                 ? 'ምን ማየት እንደሚፈልጉ ይንገሩን — እኛ እቅዱን እንሰራለን።'
                 : 'Tell us what you like — we build the plan for you.',
@@ -193,7 +194,7 @@ class _TripPlannerScreenState extends ConsumerState<TripPlannerScreen> {
             ),
           ),
         ),
-      ],
+      ]),
     );
   }
 
@@ -290,7 +291,7 @@ class _PlanResult extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 6, 18, 30),
       physics: const BouncingScrollPhysics(),
-      children: [
+      children: Reveal.stagger([
         // Summary banner
         Container(
           padding: const EdgeInsets.all(18),
@@ -350,7 +351,7 @@ class _PlanResult extends ConsumerWidget {
             subtitle: '\$${hotelPrice(hotel).toStringAsFixed(0)}'
                 '${am ? '/ሌሊት' : '/night'} · ${'★' * hotelStars(hotel)}',
             icon: Icons.hotel,
-            onTap: () => Navigator.push(context, MaterialPageRoute(
+            onTap: () => Navigator.push(context, SmoothPageRoute(
                 builder: (_) => HotelDetailPage(hotel: hotel!))),
           ),
         ],
@@ -365,7 +366,7 @@ class _PlanResult extends ConsumerWidget {
             subtitle: '\$${((guide['price'] ?? 0) as num).toStringAsFixed(0)}'
                 '${am ? '/ቀን' : '/day'} · ${(guide['specialty'] ?? '') as String}',
             icon: Icons.person_pin,
-            onTap: () => Navigator.push(context, MaterialPageRoute(
+            onTap: () => Navigator.push(context, SmoothPageRoute(
                 builder: (_) => GuideProfileScreen(guide: guide!))),
           ),
         ],
@@ -378,7 +379,7 @@ class _PlanResult extends ConsumerWidget {
                     : 'Add sites in the admin and the plan fills out fully.',
                 style: const TextStyle(color: AppColors.textMuted)),
           ),
-      ],
+      ]),
     );
   }
 
@@ -481,7 +482,7 @@ class _PlanResult extends ConsumerWidget {
             if (showTimketLink) ...[
               const SizedBox(height: 8),
               GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(
+                onTap: () => Navigator.push(context, SmoothPageRoute(
                     builder: (_) => TimketRoadmapScreen(lang: lang))),
                 child: Row(children: [
                   Text(am ? 'የጥምቀት መንገድ ካርታ ይክፈቱ'

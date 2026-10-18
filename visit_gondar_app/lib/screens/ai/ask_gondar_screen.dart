@@ -6,6 +6,7 @@ import '../../providers/tier_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/ui.dart';
 import '../premium/premium_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  ASK GONDAR — Premium AI guide (proposal page 7)
@@ -108,7 +109,7 @@ class _Hello extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
+    return Column(children: Reveal.stagger([
       Container(
         width: 80,
         height: 80,
@@ -151,7 +152,7 @@ class _Hello extends StatelessWidget {
           ),
         ]),
       ),
-    ]);
+    ]));
   }
 }
 
@@ -164,7 +165,7 @@ class _Locked extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 32, 24, 200),
-      children: [
+      children: Reveal.stagger([
         _Hello(am: am),
         const SizedBox(height: 28),
         Container(
@@ -201,7 +202,7 @@ class _Locked extends StatelessWidget {
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 13, color: AppColors.muted),
         ),
-      ],
+      ]),
     );
   }
 }
@@ -301,7 +302,7 @@ class _ChatState extends State<_Chat> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scroll.hasClients) {
         _scroll.animateTo(_scroll.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+            duration: Motion.medium, curve: Motion.curve);
       }
     });
   }
@@ -315,7 +316,7 @@ class _ChatState extends State<_Chat> {
           controller: _scroll,
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
           children: [
-            if (_msgs.isEmpty) ...[
+            if (_msgs.isEmpty) ...Reveal.stagger([
               _Hello(am: am),
               const SizedBox(height: 22),
               Kicker(am ? 'እነዚህን ይጠይቁ' : 'Try asking',
@@ -350,10 +351,21 @@ class _ChatState extends State<_Chat> {
                     ),
                   ),
                 ),
-            ],
-            for (final m in _msgs) _bubble(m),
+            ]),
+            // Each new message glides in from its own side.
+            for (final m in _msgs)
+              Reveal(
+                key: ObjectKey(m),
+                duration: Motion.page,
+                offset: Offset(m.role == 'user' ? 40 : -40, 12),
+                scale: 0.94,
+                child: _bubble(m),
+              ),
             if (_thinking)
-              Padding(
+              Reveal(
+                key: const ValueKey('thinking'),
+                duration: Motion.medium,
+                child: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Row(children: [
                   const SizedBox(width: 16, height: 16,
@@ -362,6 +374,7 @@ class _ChatState extends State<_Chat> {
                   Text(am ? 'እያሰበ ነው…' : 'Thinking…',
                       style: const TextStyle(color: AppColors.muted)),
                 ]),
+              ),
               ),
           ],
         ),

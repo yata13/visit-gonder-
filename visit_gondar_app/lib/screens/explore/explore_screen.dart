@@ -9,6 +9,7 @@ import '../../widgets/shimmer_image.dart';
 import '../../widgets/ui.dart';
 import '../map/map_screen.dart';
 import '../stay/stay_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  EXPLORE (tab 2) — design "Explore · list".
@@ -64,7 +65,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         child: SafeArea(
           bottom: false,
           child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, children: [
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: Reveal.stagger([
             // ── Header ───────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -127,7 +129,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                       child: PressScale(
                         onTap: () => setState(() => _cat = c),
                         child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
+                          duration: Motion.medium,
+                          curve: Motion.curve,
                           padding:
                               const EdgeInsets.symmetric(horizontal: 18),
                           alignment: Alignment.center,
@@ -154,14 +157,25 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             // ── List ─────────────────────────────────────────
             Expanded(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
+                duration: Motion.medium,
+                switchInCurve: Motion.curve,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: SlideTransition(
+                    position: Tween(begin: const Offset(0, 0.03),
+                            end: Offset.zero)
+                        .animate(anim),
+                    child: child,
+                  ),
+                ),
                 child: KeyedSubtree(
                   key: ValueKey(_cat),
                   child: _list(lang),
                 ),
               ),
             ),
-          ]),
+          ])),
         ),
       ),
     );
@@ -234,7 +248,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
           children: [
-            PressScale(
+            Reveal(child: PressScale(
               onTap: () =>
                   pushScreen(context, const StayScreen(initialTab: 1)),
               child: GlassPanel(
@@ -268,7 +282,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                       color: AppColors.muted),
                 ]),
               ),
-            ),
+            )),
           ],
         );
       case ExploreCategory.events:
@@ -378,9 +392,12 @@ class _AsyncList extends StatelessWidget {
                         color: AppColors.muted)),
               );
             }
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: item(list[i - 1]),
+            return Reveal(
+              delay: Motion.stagger(i),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: item(list[i - 1]),
+              ),
             );
           },
         );

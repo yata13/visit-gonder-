@@ -1,6 +1,7 @@
 import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  DESIGN SYSTEM v0.5 — "Black & white glass"
@@ -176,6 +177,7 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          foregroundBuilder: pressedForeground,
           backgroundColor: AppColors.ink,
           foregroundColor: Colors.white,
           minimumSize: const Size(48, 52),
@@ -185,6 +187,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          foregroundBuilder: pressedForeground,
           backgroundColor: AppColors.ink,
           foregroundColor: Colors.white,
           elevation: 0,
@@ -195,6 +198,7 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          foregroundBuilder: pressedForeground,
           foregroundColor: AppColors.ink,
           minimumSize: const Size(48, 48),
           side: const BorderSide(color: AppColors.ink, width: 1.5),
@@ -204,6 +208,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          foregroundBuilder: pressedForeground,
           foregroundColor: AppColors.ink,
           textStyle: btn(14, FontWeight.w800),
         ),
@@ -269,8 +274,8 @@ class AppTheme {
       dividerTheme:
           const DividerThemeData(color: AppColors.stone, thickness: 1),
       pageTransitionsTheme: const PageTransitionsTheme(builders: {
-        TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
-        TargetPlatform.iOS: FadeForwardsPageTransitionsBuilder(),
+        TargetPlatform.android: SmoothPageTransitionsBuilder(),
+        TargetPlatform.iOS: SmoothPageTransitionsBuilder(),
       }),
     );
   }

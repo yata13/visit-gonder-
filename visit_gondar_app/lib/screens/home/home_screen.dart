@@ -27,6 +27,7 @@ import '../notifications/notifications_screen.dart';
 import '../posts/post_detail_screen.dart';
 import '../posts/feed_screen.dart';
 import '../planner/trip_planner_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  HOME (tab 1) — design "Home A · Timket hero".
@@ -142,7 +143,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics()),
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 130),
-              children: [
+              children: Reveal.stagger([
                 // ── Top bar ─────────────────────────────────
                 Row(children: [
                   const AppMark(size: 32),
@@ -261,7 +262,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 14),
 
                 AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
+                  duration: Motion.medium,
+                  switchInCurve: Motion.curve,
+                  switchOutCurve: Curves.easeIn,
                   child: searching
                       ? _SearchResults(
                           key: const ValueKey('results'),
@@ -273,7 +276,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         )
                       : _homeSections(lang),
                 ),
-              ],
+              ]),
             ),
           ),
         ),
@@ -291,7 +294,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Column(
       key: const ValueKey('home'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
+      children: Reveal.stagger(start: const Duration(milliseconds: 220), [
         // ── Timket: countdown hero, or LIVE dashboard ─────────
         GestureDetector(
           onLongPress: () => setState(() => _timketDemo = !_timketDemo),
@@ -322,6 +325,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           crossAxisSpacing: 10,
           childAspectRatio: 1.55,
           children: [
+            for (final (i, tile) in [
             _Tile(
               dark: true,
               icon: Icons.hotel_outlined,
@@ -355,6 +359,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               sub: am ? 'የቀጥታ ካርታ' : 'Live map',
               onTap: () => pushScreen(context, const MapScreen()),
             ),
+            ].indexed)
+              Reveal(
+                delay: Duration(milliseconds: 300 + i * 60),
+                offset: Offset.zero,
+                scale: 0.9,
+                child: tile,
+              ),
           ],
         ),
         const SizedBox(height: 14),
@@ -395,10 +406,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         physics: const BouncingScrollPhysics(),
                         itemCount: sites.length,
                         separatorBuilder: (_, _) => const SizedBox(width: 12),
-                        itemBuilder: (_, i) => _PlaceCard(
-                          site: sites[i],
-                          lang: lang,
-                          onTap: () => openSite(context, sites[i], lang),
+                        itemBuilder: (_, i) => Reveal(
+                          delay: Motion.stagger(i, stepMs: 70, max: 4),
+                          offset: const Offset(40, 0),
+                          child: _PlaceCard(
+                            site: sites[i],
+                            lang: lang,
+                            onTap: () => openSite(context, sites[i], lang),
+                          ),
                         ),
                       ),
               ),
@@ -444,7 +459,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         // ── City news ────────────────────────────────────────
         _CityNews(lang: lang),
-      ],
+      ]),
     );
   }
 }

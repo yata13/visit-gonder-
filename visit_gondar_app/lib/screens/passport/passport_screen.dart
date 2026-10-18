@@ -12,6 +12,7 @@ import '../../widgets/shimmer_image.dart';
 import '../../widgets/ui.dart';
 import '../auth/login_screen.dart';
 import '../timket/timket_roadmap.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  GONDAR PASSPORT (tab 3) — design "Passport · home".
@@ -44,7 +45,7 @@ class PassportScreen extends ConsumerWidget {
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 130),
-            children: [
+            children: Reveal.stagger([
               _Header(am: am, progress: p, signedIn: signedIn),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -92,7 +93,7 @@ class PassportScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _Badges(am: am, progress: p),
               ),
-            ],
+            ]),
           ),
         ),
       ),
@@ -179,11 +180,17 @@ class _Header extends StatelessWidget {
                   : '${progress.stamps} of $total stamps',
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(5),
-                child: LinearProgressIndicator(
-                  value: frac,
-                  minHeight: 10,
-                  color: Colors.white,
-                  backgroundColor: AppColors.ink700,
+                // Fills up smoothly instead of jumping.
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: frac),
+                  duration: const Duration(milliseconds: 1200),
+                  curve: Motion.curve,
+                  builder: (_, v, _) => LinearProgressIndicator(
+                    value: v,
+                    minHeight: 10,
+                    color: Colors.white,
+                    backgroundColor: AppColors.ink700,
+                  ),
                 ),
               ),
             ),
@@ -311,7 +318,11 @@ class _StampGrid extends StatelessWidget {
                 ? (am ? 'ቀጣይ' : 'Next')
                 : '${c['points'] ?? 10} ${am ? 'ነጥብ' : 'pts'}';
 
-        return Semantics(
+        return Reveal(
+          delay: Duration(milliseconds: 250 + (i < 12 ? i : 0) * 50),
+          offset: Offset.zero,
+          scale: 0.7,
+          child: Semantics(
           button: true,
           label: '$name, $sub',
           excludeSemantics: true,
@@ -333,6 +344,7 @@ class _StampGrid extends StatelessWidget {
                       color: done || next ? AppColors.black
                           : AppColors.muted)),
             ]),
+          ),
           ),
         );
       },

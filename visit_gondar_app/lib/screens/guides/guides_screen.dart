@@ -5,6 +5,7 @@ import '../../providers/data_providers.dart';
 import '../../providers/language_provider.dart';
 import '../booking/booking_screen.dart';
 import 'guide_profile_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  GUIDES — live from the same Supabase `guides` table the admin
@@ -125,7 +126,7 @@ class _GuideCard extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () => Navigator.push(context,
-          MaterialPageRoute(
+          SmoothPageRoute(
               builder: (_) => GuideProfileScreen(guide: guide))),
       child: Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -203,7 +204,7 @@ class _GuideCard extends ConsumerWidget {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () => Navigator.push(context,
-              MaterialPageRoute(builder: (_) => BookingScreen(
+              SmoothPageRoute(builder: (_) => BookingScreen(
                 type: 'guide',
                 referenceId: guide['id'].toString(),
                 referenceName: name,

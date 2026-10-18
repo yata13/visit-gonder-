@@ -4,6 +4,7 @@ import '../../providers/language_provider.dart';
 import '../../providers/tier_provider.dart';
 import '../../theme/app_theme.dart';
 import '../auth/login_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  PLANS — Free vs Premium, exactly as in the proposal (page 9).
@@ -69,7 +70,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
       appBar: AppBar(title: Text(am ? 'እቅዶች' : 'Plans')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
-        children: [
+        children: Reveal.stagger([
           Text(am ? 'የሕዝብ አገልግሎቱ ክፍት ነው።' : 'The public service stays open.',
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800,
                   color: AppColors.charcoal, letterSpacing: -0.3)),
@@ -98,7 +99,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
           ),
           const SizedBox(height: 22),
           _action(tier, am),
-        ],
+        ]),
       ),
     );
   }
@@ -117,7 +118,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
       return FilledButton(
         style: _btn(),
         onPressed: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const LoginScreen())),
+            SmoothPageRoute(builder: (_) => const LoginScreen())),
         child: Text(am ? 'ፕሪሚየም ለመጠየቅ ይግቡ' : 'Sign in to request Premium'),
       );
     }

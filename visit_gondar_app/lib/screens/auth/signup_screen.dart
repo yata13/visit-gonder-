@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import 'login_screen.dart';
 import '../onboarding/welcome_screen.dart';
+import '../../widgets/motion.dart';
 
 // Ethiopia first, then common visitor origins, then a broad list.
 const _countries = [
@@ -48,7 +49,7 @@ class _SignupScreenState extends State<SignupScreen> {
       Supabase.instance.client.auth.onAuthStateChange.listen((data) {
         if (data.session != null && mounted) {
           Navigator.pushAndRemoveUntil(context,
-            MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+            SmoothPageRoute(builder: (_) => const WelcomeScreen()),
             (_) => false,
           );
         }
@@ -83,7 +84,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
       // First sign-up → show the Welcome-to-Gondar screen
       Navigator.pushAndRemoveUntil(context,
-        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+        SmoothPageRoute(builder: (_) => const WelcomeScreen()),
         (_) => false,
       );
     } on AuthException catch (e) {
@@ -114,7 +115,7 @@ class _SignupScreenState extends State<SignupScreen> {
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                children: Reveal.stagger([
                   const SizedBox(height: 24),
 
                   // Back button
@@ -411,7 +412,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   Center(
                     child: GestureDetector(
                       onTap: () => Navigator.pushReplacement(context,
-                        MaterialPageRoute(
+                        SmoothPageRoute(
                             builder: (_) => const LoginScreen())),
                       child: RichText(
                         text: const TextSpan(
@@ -430,7 +431,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   const SizedBox(height: 40),
-                ],
+                ]),
               ),
             ),
           ),

@@ -7,6 +7,7 @@ import '../screens/notifications/notifications_screen.dart';
 import '../screens/map/map_screen.dart';
 import '../screens/posts/feed_screen.dart';
 import '../screens/booking/my_bookings_screen.dart';
+import '../widgets/motion.dart';
 
 /// Global navigator key — lets the alert service show banners and
 /// navigate from anywhere, over whatever screen is open.
@@ -116,7 +117,7 @@ class RealtimeAlerts {
   static void _open(Widget screen) {
     _dismiss();
     rootNavigatorKey.currentState?.push(
-        MaterialPageRoute(builder: (_) => screen));
+        SmoothPageRoute(builder: (_) => screen));
   }
 
   static Future<void> _sound(bool urgent) async {

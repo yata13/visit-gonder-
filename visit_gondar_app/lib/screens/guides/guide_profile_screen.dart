@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/shimmer_image.dart';
 import '../booking/booking_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  GUIDE PROFILE — live row from the same Supabase `guides` table
@@ -29,7 +30,7 @@ class GuideProfileScreen extends StatelessWidget {
         SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children: Reveal.stagger([
             const SizedBox(height: 70),
 
             // ── Profile header ──
@@ -193,7 +194,7 @@ class GuideProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 120),
-          ]),
+          ])),
         ),
 
         // ── Top bar ──
@@ -234,7 +235,7 @@ class GuideProfileScreen extends StatelessWidget {
               height: 52,
               child: ElevatedButton(
                 onPressed: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => BookingScreen(
+                  SmoothPageRoute(builder: (_) => BookingScreen(
                     type: 'guide',
                     referenceId: guide['id'].toString(),
                     referenceName: name,

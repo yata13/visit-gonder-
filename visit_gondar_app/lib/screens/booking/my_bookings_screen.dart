@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/language_provider.dart';
 import '../../services/booking_service.dart';
+import '../../widgets/motion.dart';
 
 // Live stream of the current user's bookings.
 final myBookingsProvider =
@@ -83,7 +84,10 @@ class MyBookingsScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
                   physics: const BouncingScrollPhysics(),
                   itemCount: list.length,
-                  itemBuilder: (_, i) => _BookingCard(b: list[i], am: am),
+                  itemBuilder: (_, i) => Reveal(
+                    delay: Motion.stagger(i),
+                    child: _BookingCard(b: list[i], am: am),
+                  ),
                 );
               },
             ),

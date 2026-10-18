@@ -5,6 +5,7 @@ import '../../providers/data_providers.dart';
 import '../../providers/language_provider.dart';
 import 'post_card.dart';
 import 'post_detail_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  GONDAR TODAY — full news feed, every post the admin published.
@@ -76,7 +77,7 @@ class FeedScreen extends ConsumerWidget {
                           post: posts[i],
                           lang: lang,
                           onTap: () => Navigator.push(context,
-                              MaterialPageRoute(builder: (_) =>
+                              SmoothPageRoute(builder: (_) =>
                                   PostDetailScreen(
                                       post: posts[i], lang: lang))),
                         ),
