@@ -29,6 +29,7 @@ import '../posts/post_detail_screen.dart';
 import '../posts/feed_screen.dart';
 import '../planner/trip_planner_screen.dart';
 import '../../widgets/motion.dart';
+import '../../services/realtime_alerts.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  HOME (tab 1) — design "Home A · Timket hero".
@@ -44,6 +45,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late Timer _timer;
+  StreamSubscription<String>? _live;
   int _unreadCount = 0;
   static const _lastSeenKey = 'notif_last_seen';
 
@@ -72,6 +74,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (mounted) setState(() {});
     });
     _loadUnreadCount();
+    // The bell dot updates the moment a notification is sent.
+    _live = RealtimeAlerts.changes
+        .where((t) => t == 'notifications')
+        .listen((_) => _loadUnreadCount());
   }
 
   Future<void> _loadUnreadCount() async {
@@ -106,6 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void dispose() {
     _timer.cancel();
+    _live?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }

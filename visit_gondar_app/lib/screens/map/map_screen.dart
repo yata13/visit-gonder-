@@ -148,12 +148,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             onTap: (_, __) => setState(() => _selectedPlace = null),
           ),
           children: [
-            // No-label tiles: no street names in any language —
-            // our own pins carry the names instead.
+            // OpenStreetMap tiles — free, no API key (CARTO now needs one).
             TileLayer(
-              urlTemplate:
-                  'https://basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png',
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.visitgondar.app',
+              maxNativeZoom: 19,
             ),
 
             // ── Danger Zone Circles ──
@@ -248,6 +247,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ),
                 ),
               )).toList(),
+            ),
+
+            // Required credit for OpenStreetMap tiles.
+            const SimpleAttributionWidget(
+              alignment: Alignment.bottomCenter,
+              source: Text('OpenStreetMap contributors'),
             ),
           ],
         ),
@@ -380,25 +385,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
               const SizedBox(height: 10),
 
-              // Zoom buttons — below the filter chips so they never overlap
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [BoxShadow(
-                          color: Colors.black.withAlpha(30),
-                          blurRadius: 10)],
-                    ),
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      _zoomBtn(Icons.add, 1),
-                      const Divider(height: 1),
-                      _zoomBtn(Icons.remove, -1),
-                    ]),
+              // Zoom buttons — a compact pill on the left, under the chips.
+              Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Container(
+                  width: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [BoxShadow(
+                        color: Colors.black.withAlpha(30),
+                        blurRadius: 10)],
                   ),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    _zoomBtn(Icons.add_rounded, 1, 'Zoom in'),
+                    Container(width: 22, height: 1, color: AppColors.line),
+                    _zoomBtn(Icons.remove_rounded, -1, 'Zoom out'),
+                  ]),
                 ),
               ),
             ],
@@ -544,14 +547,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  Widget _zoomBtn(IconData icon, int delta) => IconButton(
-    icon: Icon(icon, size: 18),
-    onPressed: () => _mapController.move(
-        _mapController.camera.center,
-        _mapController.camera.zoom + delta),
-    padding: const EdgeInsets.all(8),
-    constraints: const BoxConstraints(),
-  );
+  Widget _zoomBtn(IconData icon, int delta, String label) => Semantics(
+        button: true,
+        label: label,
+        child: PressScale(
+          onTap: () => _mapController.move(_mapController.camera.center,
+              _mapController.camera.zoom + delta),
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(icon, size: 22, color: AppColors.ink),
+          ),
+        ),
+      );
 
   Widget _chip(String label, String? category, IconData icon) {
     final selected = _activeFilter == category;

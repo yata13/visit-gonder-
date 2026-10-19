@@ -339,7 +339,7 @@ class _GlassTabBar extends StatelessWidget {
                 height: 56,
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xD11C1C1C), // 82%
+                  color: const Color(0xE62A1A0F), // deep brown, 90%
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(
                       color: Colors.white.withValues(alpha: 0.1)),
@@ -347,7 +347,7 @@ class _GlassTabBar extends StatelessWidget {
                 child: LayoutBuilder(builder: (context, box) {
                   final w = box.maxWidth / tabs.length;
                   return Stack(children: [
-                    // The white pill glides to the chosen tab.
+                    // The gold pill glides to the chosen tab.
                     AnimatedPositioned(
                       duration: Motion.page,
                       curve: Motion.curve,
@@ -357,7 +357,7 @@ class _GlassTabBar extends StatelessWidget {
                       width: w - 2,
                       child: const DecoratedBox(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.brandGold,
                           borderRadius:
                               BorderRadius.all(Radius.circular(24)),
                           boxShadow: [BoxShadow(
@@ -373,7 +373,7 @@ class _GlassTabBar extends StatelessWidget {
                         final t = tabs[i];
                         final color = on
                             ? AppColors.black
-                            : Colors.white.withValues(alpha: 0.72);
+                            : AppColors.brandCream.withValues(alpha: 0.8);
                         return Expanded(
                           child: Semantics(
                             button: true,

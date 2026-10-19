@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_provider.dart';
+import '../services/realtime_alerts.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  GONDAR PASSPORT — check-in points, stories, trivia (migration
@@ -12,6 +13,11 @@ import 'auth_provider.dart';
 /// Active checkpoints, in the order the admin set.
 final passportCheckpointsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  // Reload as soon as the admin adds or edits a checkpoint.
+  final live = RealtimeAlerts.changes
+      .where((t) => t == 'passport_checkpoints')
+      .listen((_) => ref.invalidateSelf());
+  ref.onDispose(live.cancel);
   final rows = await Supabase.instance.client
       .from('passport_checkpoints')
       .select()

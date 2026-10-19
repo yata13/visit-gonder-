@@ -68,7 +68,7 @@ function SidebarTile({
         cn(
           "my-0.5 flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-[13px] transition-colors",
           isActive
-            ? "border-primary/40 bg-primary/20 font-bold text-primary"
+            ? "border-gold/40 bg-gold/15 font-bold text-gold"
             : "border-transparent font-medium text-white/70 hover:bg-white/5",
         )
       }
@@ -85,10 +85,10 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const items = NAV.filter((n) => n.to !== "/users" || role === "admin");
   return (
     <div className="flex h-full flex-col bg-sidebar">
-      {/* Logo area — orange tile + brand, like the Flutter shell */}
+      {/* Logo area — gold tile + brand */}
       <div className="flex items-center gap-2.5 px-5 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-          <Building2 className="h-[18px] w-[18px] text-white" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold">
+          <Building2 className="h-[18px] w-[18px] text-sidebar" />
         </div>
         <div className="leading-tight">
           <div className="text-[13px] font-extrabold text-white">Visit Gondar</div>

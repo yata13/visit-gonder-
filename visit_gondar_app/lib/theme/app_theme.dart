@@ -4,10 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
-//  DESIGN SYSTEM v0.5 — "Black & white glass"
-//  Matches the Claude Design canvas "Gondar Tourism App — Design".
-//
-//  Neutrals carry the whole look. Colour is MEANING only:
+//  DESIGN SYSTEM v0.6 — "Gondar gold"
+//  Brand palette: gold #D5A562 · cream #EEEBE9 · brown #7C4928.
+//  Brown carries text and main buttons on cream; gold marks the
+//  active / highlighted thing. Other colour is MEANING only:
 //   • SOS red     — SOS and danger, never errors or decoration
 //   • Safe green  — Safety Desk and "I'm safe" only
 //   • Amber       — pending / in review / warning zone
@@ -16,23 +16,29 @@ import '../widgets/motion.dart';
 //   • Clay        — form errors, failed payment
 // ═══════════════════════════════════════════════════════════════
 class AppColors {
-  // ── Brand / neutrals ──────────────────────────────────
-  static const ink      = Color(0xFF2B2B2B); // text, icons, main buttons
-  static const black    = Color(0xFF1C1C1C); // pressed, kicker text
-  static const ink700   = Color(0xFF3A3A3A); // body text, dark cards
-  static const muted    = Color(0xFF666666); // captions, meta
-  static const line     = Color(0xFFD4D4D4); // borders, dividers
-  static const stone    = Color(0xFFE9E9E9); // photo placeholders, wells
-  static const gray100  = Color(0xFFEBEBEB); // soft highlight, selected row
-  static const ground   = Color(0xFFF4F4F4); // app background
+  // ── Brand ─────────────────────────────────────────────
+  static const brandGold  = Color(0xFFD5A562); // highlights, active pill
+  static const brandCream = Color(0xFFEEEBE9); // app background
+  static const brandBrown = Color(0xFF7C4928); // main buttons, icons
+  static const goldTint   = Color(0xFFF6EBDA); // soft gold wash
+
+  // ── Neutrals (warm, built from the brand) ─────────────
+  static const ink      = brandBrown;        // icons, main buttons
+  static const black    = Color(0xFF2E1E14); // headings, kicker text
+  static const ink700   = Color(0xFF3A2516); // body text, dark cards
+  static const muted    = Color(0xFF6B5B4F); // captions, meta
+  static const line     = Color(0xFFD9CEC3); // borders, dividers
+  static const stone    = Color(0xFFE2D9D0); // photo placeholders, wells
+  static const gray100  = Color(0xFFE5E0DC); // soft highlight, selected row
+  static const ground   = brandCream;        // app background
   static const surface  = Color(0xFFFFFFFF); // cards, sheets
   static const onDark   = Color(0xFFFFFFFF);
-  static const onDarkMuted = Color(0xFFB3B3B3);
+  static const onDarkMuted = Color(0xFFD9CEC3);
 
-  // Night — headers, hero cards, dark tiles
-  static const night1 = Color(0xFF141414);
-  static const night2 = Color(0xFF232323);
-  static const night3 = Color(0xFF3A3A3A);
+  // Night — headers, hero cards, dark tiles (deep brown)
+  static const night1 = Color(0xFF2A1A0F);
+  static const night2 = Color(0xFF5C3A22);
+  static const night3 = brandBrown;
 
   // ── Meaning — fixed, never decoration ─────────────────
   static const sos         = Color(0xFFC4261D);
@@ -52,10 +58,10 @@ class AppColors {
 
   // ── Legacy names (older screens) → mapped onto v0.5 ───
   static const charcoal     = ink;
-  static const gold         = black;   // old accent → black ink
+  static const gold         = brandBrown; // legacy name: buttons + text, keep readable
   static const rust         = ink700;
   static const background   = ground;
-  static const goldDark     = black;
+  static const goldDark     = brandBrown;
   static const goldDeep     = black;
   static const bronze       = ink700;
   static const amber        = amberInk;
@@ -318,9 +324,9 @@ class _Glow extends StatelessWidget {
           ),
         );
     return Stack(children: [
-      blob(const Alignment(1.2, -1.1), const Color(0xFFCFCFCF)),
-      blob(const Alignment(-1.2, -0.05), const Color(0xFFD6D6D6)),
-      blob(const Alignment(1.2, 0.75), const Color(0xFFDCDCDC)),
+      blob(const Alignment(1.2, -1.1), const Color(0x66D5A562)),
+      blob(const Alignment(-1.2, -0.05), const Color(0xFFE2D9D0)),
+      blob(const Alignment(1.2, 0.75), const Color(0x4DD5A562)),
     ]);
   }
 }
