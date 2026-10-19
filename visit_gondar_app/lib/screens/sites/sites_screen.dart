@@ -172,7 +172,7 @@ class _SiteCard extends StatelessWidget {
                 bottom: 12, left: 14,
                 child: Row(children: [
                   const Icon(Icons.location_on,
-                      size: 13, color: AppColors.gold),
+                      size: 13, color: AppColors.brandGold),
                   const SizedBox(width: 4),
                   Text(location,
                       style: const TextStyle(color: Colors.white,

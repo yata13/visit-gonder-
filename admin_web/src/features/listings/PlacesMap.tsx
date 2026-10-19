@@ -19,7 +19,7 @@ interface MapPlace {
 }
 
 function pinIcon(published: boolean): L.DivIcon {
-  const color = published ? "#FF6D29" : "#B0AAA4";
+  const color = published ? "#7C4928" : "#B0AAA4";
   return L.divIcon({
     className: "",
     iconSize: [26, 26],
@@ -54,9 +54,9 @@ export function PlacesMap() {
       <div className="h-[380px] overflow-hidden rounded-xl border">
         <MapContainer center={GONDAR} zoom={13} scrollWheelZoom>
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-            subdomains={["a", "b", "c", "d"]}
+            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              maxZoom={19}
           />
           {withPin.map((p) => {
             const published = normalizePublishStatus(p.publish_status) === "published";

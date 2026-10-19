@@ -13,6 +13,7 @@ import NotificationsPage from "@/features/notifications/NotificationsPage";
 import SafetyPage from "@/features/safety/SafetyPage";
 import EmergencyPage from "@/features/emergency/EmergencyPage";
 import { Button } from "@/components/ui/button";
+import { LiveProvider } from "@/features/live/LiveProvider";
 
 /** Settings pages (Users & Roles) are for admins only — staff/editors are sent home. */
 function AdminOnly({ children }: { children: React.ReactNode }) {
@@ -41,7 +42,9 @@ const router = createBrowserRouter([
     path: "/",
     element: (
       <RequireAdmin>
-        <AppShell />
+        <LiveProvider>
+          <AppShell />
+        </LiveProvider>
       </RequireAdmin>
     ),
     children: [

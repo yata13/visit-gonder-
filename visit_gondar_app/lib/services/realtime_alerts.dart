@@ -16,9 +16,11 @@ final GlobalKey<NavigatorState> rootNavigatorKey =
 
 // ═══════════════════════════════════════════════════════════════
 //  REALTIME ALERTS — Supabase Realtime (postgres_changes).
-//  · INSERT on `notifications`  → gold banner + chime, anywhere
+//  · INSERT on `notifications`  → banner + chime, anywhere
 //  · INSERT/UPDATE on `danger_zones` (active) → red urgent banner
-//  Tap banner → opens the full detail screen.
+//  · any change to listings → [changes] so screens refresh live
+//  A 15 s poll backs up the live channel, so a notification still
+//  pops up if the socket drops. Tap banner → opens the detail screen.
 // ═══════════════════════════════════════════════════════════════
 class RealtimeAlerts {
   RealtimeAlerts._();
@@ -26,26 +28,84 @@ class RealtimeAlerts {
   static RealtimeChannel? _channel;
   static OverlayEntry? _entry;
   static bool _started = false;
+  static Timer? _poll;
+
+  /// Notification ids already shown (live channel and poll both feed
+  /// [_notify], so the same one never pops up twice).
+  static final _seen = <String>{};
+  static DateTime? _since;
+
+  /// Name of a table whenever one of its rows changes — screens listen
+  /// to refresh their data without a pull-to-refresh.
+  static final _changes = StreamController<String>.broadcast();
+  static Stream<String> get changes => _changes.stream;
+
+  /// Tables whose changes should refresh what the visitor sees.
+  static const _liveTables = [
+    'notifications', 'posts', 'danger_zones', 'hotels', 'sites',
+    'guides', 'events', 'places', 'passport_checkpoints',
+  ];
+
+  static void _notify(Map<String, dynamic> n) {
+    final id = '${n['id']}';
+    if (!_seen.add(id)) return;
+    final at = DateTime.tryParse('${n['created_at']}');
+    if (at != null && (_since == null || at.isAfter(_since!))) _since = at;
+    _changes.add('notifications');
+    _show(
+      title: (n['title'] ?? 'Visit Gondar') as String,
+      message: (n['message'] ?? n['body'] ?? '') as String,
+      urgent: (n['type'] ?? '') == 'safety',
+      onTap: () => _open(const NotificationsScreen()),
+    );
+  }
+
+  /// Backup for the live channel: asks for anything newer than the
+  /// last notification seen.
+  static Future<void> _checkNew() async {
+    try {
+      final client = Supabase.instance.client;
+      if (_since == null) {
+        // First run: remember where "now" is; don't replay old ones.
+        final last = await client
+            .from('notifications')
+            .select('id, created_at')
+            .order('created_at', ascending: false)
+            .limit(1);
+        _since = last.isEmpty
+            ? DateTime.now().toUtc()
+            : DateTime.parse('${last.first['created_at']}');
+        for (final r in last) {
+          _seen.add('${r['id']}');
+        }
+        return;
+      }
+      final rows = await client
+          .from('notifications')
+          .select()
+          .gt('created_at', _since!.toIso8601String())
+          .order('created_at')
+          .limit(5);
+      for (final r in rows) {
+        _notify(r);
+      }
+    } catch (_) {} // offline — try again on the next tick
+  }
 
   static void start() {
     if (_started) return;
     _started = true;
 
-    _channel = Supabase.instance.client
+    _checkNew();
+    _poll = Timer.periodic(const Duration(seconds: 15), (_) => _checkNew());
+
+    var channel = Supabase.instance.client
         .channel('public:alerts')
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
           schema: 'public',
           table: 'notifications',
-          callback: (payload) {
-            final n = payload.newRecord;
-            _show(
-              title: (n['title'] ?? 'Visit Gondar') as String,
-              message: (n['message'] ?? n['body'] ?? '') as String,
-              urgent: (n['type'] ?? '') == 'safety',
-              onTap: () => _open(const NotificationsScreen()),
-            );
-          },
+          callback: (payload) => _notify(payload.newRecord),
         )
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
@@ -102,8 +162,16 @@ class RealtimeAlerts {
               onTap: () => _open(const MyBookingsScreen()),
             );
           },
-        )
-      ..subscribe();
+        );
+    for (final t in _liveTables) {
+      channel = channel.onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: t,
+        callback: (_) => _changes.add(t),
+      );
+    }
+    _channel = channel..subscribe();
   }
 
   static void stop() {
@@ -111,6 +179,8 @@ class RealtimeAlerts {
       Supabase.instance.client.removeChannel(_channel!);
       _channel = null;
     }
+    _poll?.cancel();
+    _poll = null;
     _started = false;
   }
 

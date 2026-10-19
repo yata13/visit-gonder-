@@ -25,10 +25,14 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, formatMoney } from "@/lib/utils";
+import { cn, formatDate, formatMoney } from "@/lib/utils";
 import type { Tables } from "@/lib/database.types";
 import { WeatherCard } from "./WeatherCard";
 import { AskTheCity } from "./AskTheCity";
+import { BroadcastCard, LiveFeed, LiveHeader, Ticker } from "./LiveWall";
+
+/** Backup refresh in case the live channel drops (ms). */
+const POLL_MS = 20_000;
 
 const CONTENT_TABLES = [
   "hotels",
@@ -42,10 +46,10 @@ const CONTENT_TABLES = [
 /* Chart palette — validated with the dataviz six-checks script
    (lightness band, chroma floor, CVD separation, 3:1 contrast on white). */
 const CHART = {
-  bars: "#B5481F", // bookings volume (brand burnt orange)
+  bars: "#9A5524", // bookings volume (brand brown, chroma-boosted for marks)
   money: "#1F7A4D", // commission line (green = money)
-  grid: "#EAE5E0",
-  tick: "#8C857F",
+  grid: "#E2D9D0",
+  tick: "#6B5B4F",
   status: {
     pending: "#D2541A",
     approved: "#1F7A4D",
@@ -206,25 +210,60 @@ function StatCard({
   label,
   value,
   loading,
+  tv,
 }: {
   to: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: number | undefined;
   loading: boolean;
+  tv?: boolean;
 }) {
+  // Like a trading screen: when the number moves, flash it and show
+  // the change (▲ +2) for a few seconds.
+  const prev = React.useRef<number | undefined>(undefined);
+  const [delta, setDelta] = React.useState<{ n: number; key: number } | null>(null);
+  React.useEffect(() => {
+    if (value === undefined) return;
+    if (prev.current !== undefined && value !== prev.current) {
+      setDelta({ n: value - prev.current, key: Date.now() });
+      const t = setTimeout(() => setDelta(null), 6000);
+      prev.current = value;
+      return () => clearTimeout(t);
+    }
+    prev.current = value;
+  }, [value]);
+
   return (
     <Link to={to}>
-      <Card className="transition-shadow hover:shadow-md">
-        <CardContent className="flex items-center gap-4 p-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+      <Card
+        key={delta?.key}
+        className={cn("transition-shadow hover:shadow-md", delta && "live-flash")}
+      >
+        <CardContent className={cn("flex items-center gap-4", tv ? "p-6" : "p-5")}>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gold/20 text-primary">
             <Icon className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             {loading ? (
               <Skeleton className="mb-1 h-7 w-14" />
             ) : (
-              <div className="text-2xl font-semibold leading-tight">{value}</div>
+              <div className="flex items-baseline gap-2">
+                <span className={cn("font-semibold leading-tight tabular-nums", tv ? "text-4xl" : "text-2xl")}>
+                  {value}
+                </span>
+                {delta && (
+                  <span
+                    className={cn(
+                      "text-sm font-bold tabular-nums",
+                      delta.n > 0 ? "text-success" : "text-destructive",
+                    )}
+                  >
+                    {delta.n > 0 ? "▲ +" : "▼ "}
+                    {delta.n}
+                  </span>
+                )}
+              </div>
             )}
             <div className="truncate text-sm text-muted-foreground">{label}</div>
           </div>
@@ -251,7 +290,7 @@ function ChartCard({
 
 const tooltipStyle = {
   borderRadius: 8,
-  border: "1px solid #EAE5E0",
+  border: "1px solid #E2D9D0",
   fontSize: 12,
   boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
 };
@@ -263,9 +302,27 @@ export default function DashboardPage() {
   const { data, isPending, isError, error } = useQuery({
     queryKey: ["dashboard"],
     queryFn: fetchStats,
+    refetchInterval: POLL_MS,
   });
 
-  const charts = useQuery({ queryKey: ["dashboard", "charts"], queryFn: fetchChartRows });
+  const charts = useQuery({
+    queryKey: ["dashboard", "charts"],
+    queryFn: fetchChartRows,
+    refetchInterval: POLL_MS,
+  });
+
+  // TV mode = the dashboard alone, full screen (for the office TV).
+  const wallRef = React.useRef<HTMLDivElement>(null);
+  const [tv, setTv] = React.useState(false);
+  React.useEffect(() => {
+    const onChange = () => setTv(document.fullscreenElement === wallRef.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+  const toggleTv = () => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void wallRef.current?.requestFullscreen?.();
+  };
 
   const perDay = React.useMemo(
     () => (charts.data ? bookingsPerDay(charts.data) : []),
@@ -291,13 +348,12 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          What is happening across Visit Gondar right now.
-        </p>
-      </div>
+    <div
+      ref={wallRef}
+      className={cn("space-y-6", tv && "h-dvh overflow-y-auto bg-background p-8")}
+    >
+      <LiveHeader tv={tv} onToggleTv={toggleTv} />
+      <Ticker />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
@@ -306,6 +362,7 @@ export default function DashboardPage() {
           label="Published listings"
           value={data?.published}
           loading={isPending}
+          tv={tv}
         />
         <StatCard
           to="/listings/hotels"
@@ -313,6 +370,7 @@ export default function DashboardPage() {
           label="Waiting for approval"
           value={data?.pending}
           loading={isPending}
+          tv={tv}
         />
         <StatCard
           to="/bookings"
@@ -320,6 +378,7 @@ export default function DashboardPage() {
           label={`Bookings (${data?.bookingsPending ?? 0} pending)`}
           value={data?.bookingsTotal}
           loading={isPending}
+          tv={tv}
         />
         <StatCard
           to="/bookings"
@@ -327,6 +386,7 @@ export default function DashboardPage() {
           label="Deposits paid (Chapa)"
           value={data?.depositsPaid}
           loading={isPending}
+          tv={tv}
         />
         <StatCard
           to="/passport"
@@ -334,6 +394,7 @@ export default function DashboardPage() {
           label="Passport check-ins"
           value={data?.checkins}
           loading={isPending}
+          tv={tv}
         />
         <StatCard
           to="/users"
@@ -341,14 +402,22 @@ export default function DashboardPage() {
           label="Registered users"
           value={data?.users}
           loading={isPending}
+          tv={tv}
         />
       </div>
 
-      {/* ── Weather + Ask the City (proposal page 7) ── */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <WeatherCard />
-        <AskTheCity />
+      {/* ── Live: latest broadcast + everything happening ── */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="space-y-4 lg:col-span-3">
+          <BroadcastCard tv={tv} />
+          <WeatherCard />
+        </div>
+        <div className="lg:col-span-2">
+          <LiveFeed tv={tv} />
+        </div>
       </div>
+
+      <AskTheCity />
 
       {/* ── Graphs ── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

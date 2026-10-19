@@ -50,7 +50,7 @@ class WeatherCard extends ConsumerWidget {
     final today = w.days.isNotEmpty ? w.days.first : null;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
-        Icon(WeatherService.icon(w.currentCode), color: AppColors.gold, size: 38),
+        Icon(WeatherService.icon(w.currentCode), color: AppColors.brandGold, size: 38),
         const SizedBox(width: 12),
         Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -110,7 +110,7 @@ class WeatherChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(WeatherService.icon(day.code), size: 15, color: AppColors.gold),
+      Icon(WeatherService.icon(day.code), size: 15, color: AppColors.brandGold),
       const SizedBox(width: 4),
       Text(
         '${day.max.round()}° · ${WeatherService.label(day.code, am)}'

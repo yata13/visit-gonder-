@@ -194,7 +194,7 @@ class _HotelRow extends StatelessWidget {
               const SizedBox(height: 3),
               Row(children: List.generate(5, (i) => Icon(Icons.star_rounded,
                   size: 13,
-                  color: i < stars ? AppColors.gold
+                  color: i < stars ? AppColors.brandGold
                       : AppColors.surfaceVariant))),
               if (location.isNotEmpty) ...[
                 const SizedBox(height: 4),
