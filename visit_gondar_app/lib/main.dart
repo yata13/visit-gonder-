@@ -23,6 +23,7 @@ import 'screens/explore/explore_screen.dart';
 import 'screens/passport/passport_screen.dart';
 import 'screens/ai/ask_gondar_screen.dart';
 import 'screens/me/me_screen.dart';
+import 'widgets/motion.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,7 @@ class VisitGondarApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       navigatorKey: rootNavigatorKey,
       theme: AppTheme.theme,
+      scrollBehavior: const SmoothScrollBehavior(),
       home: const _LaunchDecider(),
     );
   }
@@ -101,7 +103,16 @@ class _LaunchDeciderState extends State<_LaunchDecider> {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 350),
+      duration: Motion.slow,
+      switchInCurve: Motion.curve,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, anim) => FadeTransition(
+        opacity: anim,
+        child: ScaleTransition(
+          scale: Tween(begin: 1.04, end: 1.0).animate(anim),
+          child: child,
+        ),
+      ),
       child: _next ?? const SplashScreen(),
     );
   }
@@ -120,16 +131,28 @@ class SplashScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(bottom: 120),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              const AppMark(size: 112),
+              const Reveal(
+                duration: Duration(milliseconds: 700),
+                offset: Offset.zero,
+                scale: 0.6,
+                child: AppMark(size: 112),
+              ),
               const SizedBox(height: 18),
-              const Text(AppConstants.appName,
-                  style: TextStyle(fontSize: 34, height: 1.1,
-                      fontWeight: FontWeight.w800, letterSpacing: -0.6,
-                      color: AppColors.black)),
+              const Reveal(
+                delay: Duration(milliseconds: 160),
+                child: Text(AppConstants.appName,
+                    style: TextStyle(fontSize: 34, height: 1.1,
+                        fontWeight: FontWeight.w800, letterSpacing: -0.6,
+                        color: AppColors.black)),
+              ),
               const SizedBox(height: 8),
-              const Text('ጎንደር · Gondar',
-                  style: TextStyle(fontSize: 18,
-                      fontWeight: FontWeight.w600, color: AppColors.muted)),
+              const Reveal(
+                delay: Duration(milliseconds: 260),
+                child: Text('ጎንደር · Gondar',
+                    style: TextStyle(fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.muted)),
+              ),
             ]),
           ),
         ),
@@ -138,7 +161,10 @@ class SplashScreen extends StatelessWidget {
           right: 0,
           bottom: 72,
           child: Center(
-            child: SizedBox(
+            child: Reveal(
+              delay: const Duration(milliseconds: 360),
+              offset: Offset.zero,
+              child: SizedBox(
               width: 120,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(2),
@@ -148,6 +174,7 @@ class SplashScreen extends StatelessWidget {
                   backgroundColor: AppColors.stone,
                 ),
               ),
+            ),
             ),
           ),
         ),
@@ -211,12 +238,10 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
       extendBody: true,
       backgroundColor: AppColors.ground,
       body: Stack(children: [
-        // Keep visited tabs alive so scroll position and chats survive.
-        IndexedStack(
-          index: _index,
-          children: List.generate(5, (i) =>
-              _visited.contains(i) ? _screen(i) : const SizedBox.shrink()),
-        ),
+        // Keep visited tabs alive so scroll position and chats survive;
+        // the chosen tab fades and lifts in, the old one fades away.
+        for (final i in _visited)
+          _TabPage(key: ValueKey(i), active: i == _index, child: _screen(i)),
         // SOS — always one tap away. Lifted on Ask AI so it clears
         // the message box.
         AnimatedPositioned(
@@ -234,6 +259,44 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
         index: _index,
         onTap: select,
         label: am ? 'ዋና ምናሌ' : 'Main menu',
+      ),
+    );
+  }
+}
+
+/// One tab of [MainNavigation]: stays alive when hidden, animates
+/// in and out when the tab changes.
+class _TabPage extends StatelessWidget {
+  final bool active;
+  final Widget child;
+  const _TabPage({super.key, required this.active, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final duration = active ? Motion.medium : Motion.fast;
+    return Positioned.fill(
+      child: IgnorePointer(
+        ignoring: !active,
+        child: ExcludeSemantics(
+          excluding: !active,
+          child: AnimatedOpacity(
+            opacity: active ? 1 : 0,
+            duration: duration,
+            curve: active ? Motion.curve : Curves.easeIn,
+            child: AnimatedSlide(
+              offset: active ? Offset.zero : const Offset(0, 0.015),
+              duration: duration,
+              curve: Motion.curve,
+              child: AnimatedScale(
+                scale: active ? 1 : 0.985,
+                duration: duration,
+                curve: Motion.curve,
+                // Hidden tabs pause their own animations (maps, loaders).
+                child: TickerMode(enabled: active, child: child),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -281,67 +344,87 @@ class _GlassTabBar extends StatelessWidget {
                   border: Border.all(
                       color: Colors.white.withValues(alpha: 0.1)),
                 ),
-                child: Row(
-                  children: List.generate(tabs.length, (i) {
-                    final on = i == index;
-                    final t = tabs[i];
-                    return Expanded(
-                      child: Semantics(
-                        button: true,
-                        selected: on,
-                        label: t.label,
-                        excludeSemantics: true,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () => onTap(i),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeOut,
-                            margin: const EdgeInsets.symmetric(horizontal: 1),
-                            decoration: BoxDecoration(
-                              color: on ? Colors.white : Colors.transparent,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: on
-                                  ? const [BoxShadow(
-                                      color: Color(0x40000000),
-                                      blurRadius: 14,
-                                      offset: Offset(0, 6))]
-                                  : null,
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(on ? t.activeIcon : t.icon,
-                                    size: 20,
-                                    color: on
-                                        ? AppColors.black
-                                        : Colors.white
-                                            .withValues(alpha: 0.72)),
-                                const SizedBox(height: 1),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(t.label,
-                                      maxLines: 1,
-                                      style: TextStyle(
+                child: LayoutBuilder(builder: (context, box) {
+                  final w = box.maxWidth / tabs.length;
+                  return Stack(children: [
+                    // The white pill glides to the chosen tab.
+                    AnimatedPositioned(
+                      duration: Motion.page,
+                      curve: Motion.curve,
+                      left: w * index + 1,
+                      top: 0,
+                      bottom: 0,
+                      width: w - 2,
+                      child: const DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(24)),
+                          boxShadow: [BoxShadow(
+                              color: Color(0x40000000),
+                              blurRadius: 14,
+                              offset: Offset(0, 6))],
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: List.generate(tabs.length, (i) {
+                        final on = i == index;
+                        final t = tabs[i];
+                        final color = on
+                            ? AppColors.black
+                            : Colors.white.withValues(alpha: 0.72);
+                        return Expanded(
+                          child: Semantics(
+                            button: true,
+                            selected: on,
+                            label: t.label,
+                            excludeSemantics: true,
+                            child: PressScale(
+                              onTap: () => onTap(i),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  AnimatedScale(
+                                    scale: on ? 1.12 : 1,
+                                    duration: Motion.medium,
+                                    curve: Motion.pop,
+                                    child: AnimatedSwitcher(
+                                      duration: Motion.fast,
+                                      child: Icon(on ? t.activeIcon : t.icon,
+                                          key: ValueKey(on),
+                                          size: 20,
+                                          color: color),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 1),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: AnimatedDefaultTextStyle(
+                                      duration: Motion.medium,
+                                      curve: Motion.curve,
+                                      style: DefaultTextStyle.of(context)
+                                          .style
+                                          .merge(TextStyle(
                                         fontSize: 11,
                                         height: 1.15,
                                         fontWeight: on
                                             ? FontWeight.w800
                                             : FontWeight.w600,
-                                        color: on
-                                            ? AppColors.black
-                                            : Colors.white
-                                                .withValues(alpha: 0.72),
+                                        color: color,
                                       )),
-                                ),
-                              ],
+                                      child: Text(t.label, maxLines: 1),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
+                        );
+                      }),
+                    ),
+                  ]);
+                }),
               ),
             ),
           ),

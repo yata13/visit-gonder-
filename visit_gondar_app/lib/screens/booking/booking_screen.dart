@@ -5,6 +5,7 @@ import '../../core/constants/app_constants.dart';
 import '../../theme/app_theme.dart';
 import '../../services/booking_service.dart';
 import 'my_bookings_screen.dart';
+import '../../widgets/motion.dart';
 
 class BookingScreen extends StatefulWidget {
   final String type;           // 'hotel' | 'guide'
@@ -129,7 +130,7 @@ class _BookingScreenState extends State<BookingScreen> {
       );
 
       if (!mounted) return;
-      Navigator.pushReplacement(context, MaterialPageRoute(
+      Navigator.pushReplacement(context, SmoothPageRoute(
         builder: (_) => BookingConfirmedScreen(
           booking: booking,
           days: _days,
@@ -161,7 +162,7 @@ class _BookingScreenState extends State<BookingScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: Reveal.stagger([
 
           // ── Property card ──
           Container(
@@ -318,7 +319,7 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
           ],
           const SizedBox(height: 100),
-        ]),
+        ])),
       ),
 
       // ── Bottom confirm button ──
@@ -541,7 +542,7 @@ class BookingConfirmedScreen extends StatelessWidget {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pushReplacement(context,
-                      MaterialPageRoute(
+                      SmoothPageRoute(
                           builder: (_) => const MyBookingsScreen())),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.gold,

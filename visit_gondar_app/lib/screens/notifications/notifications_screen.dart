@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/ui.dart';
+import '../../widgets/motion.dart';
 
 // ── Provider — realtime stream ────────────────────────────────
 final notificationsProvider = StreamProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
@@ -275,8 +277,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       final n = list[i];
                       final id = n['id'].toString();
                       final isUnread = !_readIds.contains(id);
-                      return GestureDetector(
-                        onTap: () => _openNotif(n),
+                      return Reveal(
+                        delay: Motion.stagger(i),
                         child: _notifCard(n, isUnread),
                       );
                     },
@@ -327,7 +329,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       }
     } catch (_) {}
 
-    return GestureDetector(
+    return PressScale(
       onTap: () => _openNotif(n),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),

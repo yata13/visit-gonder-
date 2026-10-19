@@ -4,26 +4,12 @@
 // ═══════════════════════════════════════════════════════════════
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'motion.dart';
 import '../screens/emergency/emergency_screen.dart';
 
-/// Push with the app's soft fade + slide.
+/// Push with the app's smooth glide (see motion.dart).
 Future<T?> pushScreen<T>(BuildContext context, Widget screen) =>
-    Navigator.push<T>(context, PageRouteBuilder(
-      pageBuilder: (_, _, _) => screen,
-      transitionsBuilder: (_, anim, _, child) {
-        final curved = CurvedAnimation(parent: anim, curve: Curves.easeOut);
-        return FadeTransition(
-          opacity: curved,
-          child: SlideTransition(
-            position: Tween(begin: const Offset(0.03, 0), end: Offset.zero)
-                .animate(curved),
-            child: child,
-          ),
-        );
-      },
-      transitionDuration: const Duration(milliseconds: 280),
-      reverseTransitionDuration: const Duration(milliseconds: 220),
-    ));
+    Navigator.push<T>(context, SmoothPageRoute(builder: (_) => screen));
 
 /// The castle app mark (two domed towers + keep), drawn from the
 /// design's 48×48 SVG.
@@ -106,10 +92,14 @@ class PressScale extends StatefulWidget {
 
 class _PressScaleState extends State<PressScale>
     with SingleTickerProviderStateMixin {
+  // Sinks quickly under the finger, springs back with a small bounce.
   late final AnimationController _ctrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 140));
-  late final Animation<double> _scale = Tween(begin: 1.0, end: 0.97)
-      .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+      vsync: this,
+      duration: Motion.fast,
+      reverseDuration: const Duration(milliseconds: 420));
+  late final Animation<double> _scale = Tween(begin: 1.0, end: 0.95)
+      .animate(CurvedAnimation(parent: _ctrl, curve: Motion.curve,
+          reverseCurve: Curves.easeOutBack.flipped));
 
   @override
   void dispose() {
@@ -117,12 +107,19 @@ class _PressScaleState extends State<PressScale>
     super.dispose();
   }
 
+  void _release() {
+    // A quick tap still shows the full press before springing back.
+    _ctrl.forward().whenCompleteOrCancel(() {
+      if (mounted) _ctrl.reverse();
+    });
+  }
+
   @override
   Widget build(BuildContext context) => GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => _ctrl.forward(),
         onTapUp: (_) {
-          _ctrl.reverse();
+          _release();
           widget.onTap?.call();
         },
         onTapCancel: () => _ctrl.reverse(),

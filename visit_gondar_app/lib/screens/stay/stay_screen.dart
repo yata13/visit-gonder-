@@ -7,6 +7,7 @@ import '../../providers/language_provider.dart';
 import '../../widgets/shimmer_image.dart';
 import '../hotels/hotels_screen.dart';
 import '../booking/my_bookings_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  STAY — everything a visitor needs on the ground:
@@ -49,7 +50,7 @@ class _StayScreenState extends ConsumerState<StayScreen> {
                         color: AppColors.charcoal, letterSpacing: -0.5)),
               ),
               GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(
+                onTap: () => Navigator.push(context, SmoothPageRoute(
                     builder: (_) => const MyBookingsScreen())),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -169,7 +170,7 @@ class _HotelRow extends StatelessWidget {
     final location = (hotel['location'] ?? '') as String;
 
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(
+      onTap: () => Navigator.push(context, SmoothPageRoute(
           builder: (_) => HotelDetailPage(hotel: hotel))),
       child: Container(
         margin: const EdgeInsets.only(bottom: 14),
@@ -244,7 +245,7 @@ class _TaxiTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       physics: const BouncingScrollPhysics(),
-      children: [
+      children: Reveal.stagger([
         Container(
           padding: const EdgeInsets.all(14),
           margin: const EdgeInsets.only(bottom: 14),
@@ -263,7 +264,7 @@ class _TaxiTab extends StatelessWidget {
         ...services.asMap().entries.map((e) => _fade(e.key,
             _taxiCard(context, e.value.$1, e.value.$2, e.value.$3, e.value.$4,
                 am))),
-      ],
+      ]),
     );
   }
 

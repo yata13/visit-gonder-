@@ -5,6 +5,8 @@ import { Toaster } from "sonner";
 import App from "./App";
 import { AuthProvider } from "./features/auth/AuthProvider";
 import { ErrorBoundary } from "./components/error-boundary";
+import { SetupNeeded } from "./components/setup-needed";
+import { supabaseConfigError } from "./lib/supabase";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -17,7 +19,12 @@ const queryClient = new QueryClient({
   },
 });
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+
+if (supabaseConfigError) {
+  root.render(<SetupNeeded reason={supabaseConfigError} />);
+} else {
+  root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -28,4 +35,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       </QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>,
-);
+  );
+}

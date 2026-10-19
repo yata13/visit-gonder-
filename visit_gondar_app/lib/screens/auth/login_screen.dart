@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../main.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
+import '../../widgets/motion.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Supabase.instance.client.auth.onAuthStateChange.listen((data) {
         if (data.session != null && mounted) {
           Navigator.pushAndRemoveUntil(context,
-            MaterialPageRoute(builder: (_) => const MainNavigation()),
+            SmoothPageRoute(builder: (_) => const MainNavigation()),
             (_) => false,
           );
         }
@@ -52,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await _auth.signIn(email: _email.text.trim(), password: _password.text);
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(context,
-        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        SmoothPageRoute(builder: (_) => const MainNavigation()),
         (_) => false,
       );
     } on AuthException catch (e) {
@@ -82,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children: Reveal.stagger([
                 const SizedBox(height: 16),
                 _backButton(context),
                 const SizedBox(height: 32),
@@ -142,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: GestureDetector(
-                    onTap: () => Navigator.push(context, MaterialPageRoute(
+                    onTap: () => Navigator.push(context, SmoothPageRoute(
                         builder: (_) => const ForgotPasswordScreen())),
                     child: const Text('Forgot password?',
                         style: TextStyle(color: AppColors.goldDark,
@@ -218,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: GestureDetector(
                     onTap: () => Navigator.pushReplacement(context,
-                        MaterialPageRoute(builder: (_) => const SignupScreen())),
+                        SmoothPageRoute(builder: (_) => const SignupScreen())),
                     child: RichText(
                       text: const TextSpan(
                         text: "Don't have an account? ",
@@ -234,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-              ],
+              ]),
             ),
           ),
         ),

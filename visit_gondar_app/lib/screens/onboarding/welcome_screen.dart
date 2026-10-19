@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../main.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/language_provider.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  WELCOME — shown right after first sign-up. Full background
@@ -156,7 +157,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   height: 56,
                   child: ElevatedButton(
                     onPressed: () => Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
+                        SmoothPageRoute(
                             builder: (_) => const MainNavigation())),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,

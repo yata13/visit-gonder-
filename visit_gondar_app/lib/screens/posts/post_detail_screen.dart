@@ -3,6 +3,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import '../../theme/app_theme.dart';
 import '../../widgets/shimmer_image.dart';
 import '../../providers/language_provider.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  POST DETAIL — full view of a Gondar news feed post.
@@ -25,7 +26,7 @@ class PostDetailScreen extends StatelessWidget {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children: Reveal.stagger([
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
               child: GestureDetector(
@@ -102,7 +103,7 @@ class PostDetailScreen extends StatelessWidget {
                 const SizedBox(height: 40),
               ]),
             ),
-          ]),
+          ])),
         ),
       ),
     );

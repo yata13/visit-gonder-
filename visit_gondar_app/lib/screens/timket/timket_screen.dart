@@ -6,6 +6,7 @@ import '../../providers/data_providers.dart';
 import '../../providers/language_provider.dart';
 import '../../widgets/shimmer_image.dart';
 import 'timket_live.dart';
+import '../../widgets/motion.dart';
 
 class TimketScreen extends ConsumerWidget {
   const TimketScreen({super.key});
@@ -61,7 +62,7 @@ class TimketScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SingleChildScrollView(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: Reveal.stagger([
           // Hero image with overlay — from the database (admin-managed)
           Stack(children: [
             ShimmerImage(
@@ -173,7 +174,7 @@ class TimketScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 20),
-        ]),
+        ])),
       ),
     );
   }

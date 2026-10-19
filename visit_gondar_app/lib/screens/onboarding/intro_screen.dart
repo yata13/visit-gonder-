@@ -6,6 +6,7 @@ import '../../theme/app_theme.dart';
 import '../../providers/language_provider.dart';
 import '../../widgets/ui.dart';
 import 'onboarding_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  FIRST OPEN — design "Start · Language" then "Start · Welcome"
@@ -27,7 +28,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
     } catch (_) {}
     if (!mounted) return;
     Navigator.pushReplacement(context,
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()));
+        SmoothPageRoute(builder: (_) => const OnboardingScreen()));
   }
 
   @override
@@ -37,7 +38,18 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
       body: GlassBackground(
         child: Stack(children: [
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
+            duration: Motion.page,
+            switchInCurve: Motion.curve,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, anim) => FadeTransition(
+              opacity: anim,
+              child: SlideTransition(
+                position: Tween(begin: const Offset(0.08, 0),
+                        end: Offset.zero)
+                    .animate(anim),
+                child: child,
+              ),
+            ),
             child: _languageChosen
                 ? _Slides(key: const ValueKey('slides'), onDone: _finish)
                 : _LanguageStep(
@@ -125,29 +137,45 @@ class _LanguageStep extends ConsumerWidget {
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-          const Align(
-              alignment: Alignment.centerLeft, child: AppMark(size: 56)),
-          const SizedBox(height: 28),
-          const Text('Choose your language',
-              style: TextStyle(fontSize: 30, height: 1.2,
-                  fontWeight: FontWeight.w800)),
-          const SizedBox(height: 6),
-          const Text('ቋንቋ ይምረጡ',
-              style: TextStyle(fontSize: 26, height: 1.35,
-                  fontWeight: FontWeight.w800, color: AppColors.muted)),
-          const SizedBox(height: 28),
-          option('en', 'English', 'እንግሊዝኛ'),
-          const SizedBox(height: 12),
-          option('am', 'አማርኛ', 'Amharic'),
-          const SizedBox(height: 28),
-          const Text('You can change this later in Me.\n'
-              'በኋላ በ«እኔ» ገጽ መቀየር ይችላሉ።',
-              style: TextStyle(fontSize: 14, height: 1.5,
-                  color: AppColors.muted)),
+          ...Reveal.stagger(stepMs: 70, [
+            const Align(
+                alignment: Alignment.centerLeft,
+                child: AppMark(size: 56)),
+            const Padding(
+              padding: EdgeInsets.only(top: 28),
+              child: Text('Choose your language',
+                  style: TextStyle(fontSize: 30, height: 1.2,
+                      fontWeight: FontWeight.w800)),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(top: 6),
+              child: Text('ቋንቋ ይምረጡ',
+                  style: TextStyle(fontSize: 26, height: 1.35,
+                      fontWeight: FontWeight.w800, color: AppColors.muted)),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 28),
+              child: option('en', 'English', 'እንግሊዝኛ'),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: option('am', 'አማርኛ', 'Amharic'),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(top: 28),
+              child: Text('You can change this later in Me.\n'
+                  'በኋላ በ«እኔ» ገጽ መቀየር ይችላሉ።',
+                  style: TextStyle(fontSize: 14, height: 1.5,
+                      color: AppColors.muted)),
+            ),
+          ]),
           const Spacer(),
-          FilledButton(
-            onPressed: onContinue,
-            child: Text(am ? 'ቀጥል' : 'Continue'),
+          Reveal(
+            delay: const Duration(milliseconds: 450),
+            child: FilledButton(
+              onPressed: onContinue,
+              child: SwapText(am ? 'ቀጥል' : 'Continue'),
+            ),
           ),
         ]),
       ),
@@ -317,31 +345,72 @@ class _SlidesState extends ConsumerState<_Slides> {
             itemBuilder: (_, i) {
               final s = _slides[i];
               final gets = am ? s.getsAm : s.getsEn;
+              // Parallax: while swiping, the art drifts and shrinks faster
+              // than the text, and the page fades toward the edges.
+              Widget layer(double speed, Widget child,
+                      {bool shrink = false}) =>
+                  AnimatedBuilder(
+                    animation: _ctrl,
+                    child: child,
+                    builder: (_, child) {
+                      final page = _ctrl.hasClients &&
+                              _ctrl.position.haveDimensions
+                          ? _ctrl.page!
+                          : _page.toDouble();
+                      final d = (page - i).clamp(-1.0, 1.0);
+                      return Opacity(
+                        opacity: 1 - d.abs() * 0.7,
+                        child: Transform.translate(
+                          offset: Offset(d * speed, 0),
+                          child: shrink
+                              ? Transform.scale(
+                                  scale: 1 - d.abs() * 0.25, child: child)
+                              : child,
+                        ),
+                      );
+                    },
+                  );
               return SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
                 child: Column(children: [
-                  _art(i),
+                  layer(140, Reveal(
+                    offset: Offset.zero,
+                    scale: 0.8,
+                    duration: const Duration(milliseconds: 700),
+                    child: _art(i),
+                  ), shrink: true),
                   const SizedBox(height: 20),
-                  Text(am ? s.titleAm : s.titleEn,
+                  layer(70, Reveal(
+                    delay: const Duration(milliseconds: 120),
+                    child: Text(am ? s.titleAm : s.titleEn,
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 30, height: 1.2,
                           fontWeight: FontWeight.w800)),
+                  )),
                   const SizedBox(height: 8),
-                  Text(am ? s.bodyAm : s.bodyEn,
+                  layer(40, Reveal(
+                    delay: const Duration(milliseconds: 200),
+                    child: Text(am ? s.bodyAm : s.bodyEn,
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 16, height: 1.5,
                           color: AppColors.ink700)),
+                  )),
                   const SizedBox(height: 20),
-                  GlassPanel(
+                  layer(20, Reveal(
+                    delay: const Duration(milliseconds: 280),
+                    child: GlassPanel(
                     padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                       Kicker(am ? 'የሚያገኙት' : 'What you get',
                           color: AppColors.muted),
-                      for (final g in gets) ...[
+                      for (final (n, g) in gets.indexed) ...[
                         const SizedBox(height: 10),
-                        Row(children: [
+                        Reveal(
+                          delay: Duration(milliseconds: 380 + n * 70),
+                          offset: const Offset(-16, 0),
+                          child: Row(children: [
                           Container(
                             width: 24,
                             height: 24,
@@ -357,10 +426,11 @@ class _SlidesState extends ConsumerState<_Slides> {
                                 style: const TextStyle(fontSize: 15,
                                     fontWeight: FontWeight.w600)),
                           ),
-                        ]),
+                        ])),
                       ],
                     ]),
                   ),
+                  )),
                 ]),
               );
             },
@@ -371,7 +441,8 @@ class _SlidesState extends ConsumerState<_Slides> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(_slides.length, (i) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
+                  duration: Motion.medium,
+                  curve: Motion.curve,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   width: i == _page ? 28 : 8,
                   height: 8,
@@ -387,20 +458,32 @@ class _SlidesState extends ConsumerState<_Slides> {
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
           child: SizedBox(
             width: double.infinity,
-            child: last
+            child: AnimatedSwitcher(
+              duration: Motion.medium,
+              switchInCurve: Motion.curve,
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: ScaleTransition(
+                  scale: Tween(begin: 0.92, end: 1.0).animate(anim),
+                  child: child,
+                ),
+              ),
+              child: last
                 ? FilledButton(
+                    key: const ValueKey('start'),
                     onPressed: widget.onDone,
                     child: Text(am ? 'እንጀምር' : 'Get started'),
                   )
                 : OutlinedButton.icon(
+                    key: const ValueKey('next'),
                     onPressed: () => _ctrl.nextPage(
-                        duration: const Duration(milliseconds: 320),
-                        curve: Curves.easeOutCubic),
+                        duration: Motion.page, curve: Motion.curve),
                     icon: const Icon(Icons.arrow_forward_rounded),
                     label: Text(am ? 'ቀጣይ' : 'Next'),
                     style: OutlinedButton.styleFrom(
                         minimumSize: const Size(48, 52)),
                   ),
+            ),
           ),
         ),
       ]),

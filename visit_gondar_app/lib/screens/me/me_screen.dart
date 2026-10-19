@@ -17,6 +17,9 @@ import '../emergency/emergency_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../premium/premium_screen.dart';
+import '../ai/ask_gondar_screen.dart';
+import '../tour/virtual_tour_screen.dart';
+import '../../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  ME (tab 5) — design "Me". Profile, plan, menu, language, log out.
@@ -49,6 +52,11 @@ class MeScreen extends ConsumerWidget {
       if (user != null)
         (Icons.manage_accounts_outlined, am ? 'መለያ' : 'Account',
             () => pushScreen(context, const AccountScreen())),
+      (Icons.threesixty_rounded,
+          am ? 'የፋሲል ግቢ ምናባዊ ጉብኝት' : 'Virtual tour · Fasil Ghebbi',
+          () => pushScreen(context, const VirtualTourScreen())),
+      (Icons.auto_awesome_outlined, am ? 'AI ይጠይቁ' : 'Ask Gondar AI',
+          () => pushScreen(context, const AskGondarScreen())),
       (Icons.health_and_safety_outlined, am ? 'ደህንነት እና SOS' : 'Safety & SOS',
           () => pushScreen(context, const EmergencyScreen())),
       (Icons.help_outline_rounded, am ? 'እርዳታ' : 'Help',
@@ -62,7 +70,7 @@ class MeScreen extends ConsumerWidget {
           bottom: false,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 130),
-            children: [
+            children: Reveal.stagger([
               // ── Profile ─────────────────────────────────────
               Row(children: [
                 Container(
@@ -260,7 +268,7 @@ class MeScreen extends ConsumerWidget {
                       if (!context.mounted) return;
                       Navigator.of(context, rootNavigator: true)
                           .pushAndRemoveUntil(
-                              MaterialPageRoute(
+                              SmoothPageRoute(
                                   builder: (_) => const OnboardingScreen()),
                               (_) => false);
                     },
@@ -274,7 +282,7 @@ class MeScreen extends ConsumerWidget {
                     style: const TextStyle(fontSize: 13,
                         color: AppColors.muted)),
               ),
-            ],
+            ]),
           ),
         ),
       ),
