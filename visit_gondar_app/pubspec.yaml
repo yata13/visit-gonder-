@@ -35,7 +35,7 @@ dependencies:
   flutter_dotenv: ^5.2.1         # Load .env secrets safely
   http: ^1.2.2                   # Plain HTTP calls (live weather)
   audioplayers: ^6.0.0           # Play notification sound
-
+  flutter_local_notifications: ^22.3.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -55,3 +55,4 @@ flutter:
     - .env
     - assets/sounds/
     - assets/images/
+    - assets/tour/

@@ -29,6 +29,7 @@ import '../posts/post_detail_screen.dart';
 import '../posts/feed_screen.dart';
 import '../planner/trip_planner_screen.dart';
 import '../../widgets/motion.dart';
+import '../../widgets/timket_art.dart';
 import '../../services/realtime_alerts.dart';
 
 // ═══════════════════════════════════════════════════════════════
@@ -501,6 +502,10 @@ class _TimketHero extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           decoration: AppDecor.night(),
           child: Stack(clipBehavior: Clip.none, children: [
+            // Gold painting: castle skyline, Timket umbrellas, crosses.
+            const Positioned(
+                left: -18, top: -18, right: -18, bottom: -18,
+                child: TimketArt()),
             // Soft light in the top-right corner.
             Positioned(
               right: -60,

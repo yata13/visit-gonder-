@@ -8,6 +8,7 @@ import '../screens/map/map_screen.dart';
 import '../screens/posts/feed_screen.dart';
 import '../screens/booking/my_bookings_screen.dart';
 import '../widgets/motion.dart';
+import 'phone_notifications.dart';
 
 /// Global navigator key — lets the alert service show banners and
 /// navigate from anywhere, over whatever screen is open.
@@ -95,6 +96,8 @@ class RealtimeAlerts {
   static void start() {
     if (_started) return;
     _started = true;
+
+    PhoneNotifications.onOpen = () => _open(const NotificationsScreen());
 
     _checkNew();
     _poll = Timer.periodic(const Duration(seconds: 15), (_) => _checkNew());
@@ -208,11 +211,17 @@ class RealtimeAlerts {
     required bool urgent,
     required VoidCallback onTap,
   }) {
+    // Status bar / lock screen too — seen even when the app is in the
+    // background or the phone is locked.
+    PhoneNotifications.show(
+        title: title, body: message, urgent: urgent);
+
     final overlay = rootNavigatorKey.currentState?.overlay;
     if (overlay == null) return;
 
     _dismiss();
-    _sound(urgent);
+    // The phone notification already rings; chime only without it.
+    if (!PhoneNotifications.active) _sound(urgent);
 
     _entry = OverlayEntry(
       builder: (_) => _AlertBanner(

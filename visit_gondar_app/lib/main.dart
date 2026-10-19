@@ -14,6 +14,7 @@ import 'core/constants/app_constants.dart';
 import 'theme/app_theme.dart';
 import 'services/supabase_service.dart';
 import 'services/realtime_alerts.dart';
+import 'services/phone_notifications.dart';
 import 'providers/language_provider.dart';
 import 'widgets/ui.dart';
 import 'screens/onboarding/intro_screen.dart';
@@ -39,6 +40,8 @@ Future<void> main() async {
     RealtimeAlerts.start(); // live popups on every screen
   } catch (_) {}
   runApp(const ProviderScope(child: VisitGondarApp()));
+  // After the first frame, so the permission prompt sits over the app.
+  WidgetsBinding.instance.addPostFrameCallback((_) => PhoneNotifications.init());
 }
 
 class VisitGondarApp extends StatelessWidget {
