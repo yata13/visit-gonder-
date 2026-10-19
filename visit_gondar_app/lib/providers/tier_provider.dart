@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_provider.dart';
+import '../core/constants/app_constants.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  TWO KINDS OF VISITOR (proposal page 9)
@@ -32,6 +33,10 @@ final userTierProvider = FutureProvider<UserTier>((ref) async {
   ref.watch(authStateProvider); // re-check on sign in / sign out
   final db = Supabase.instance.client;
   final user = db.auth.currentUser;
+  // Demo mode: everyone tries Premium (see AppConstants.demoMode).
+  if (AppConstants.demoMode) {
+    return UserTier(tier: Tier.premium, signedIn: user != null);
+  }
   if (user == null) return UserTier.guest;
 
   try {

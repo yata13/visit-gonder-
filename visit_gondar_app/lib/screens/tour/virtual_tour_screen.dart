@@ -7,6 +7,7 @@ import '../../providers/tier_provider.dart';
 import '../../widgets/shimmer_image.dart';
 import '../../widgets/ui.dart';
 import '../../widgets/panorama_360.dart';
+import '../../core/constants/app_constants.dart';
 import '../ai/ask_gondar_screen.dart';
 import '../premium/premium_screen.dart';
 
@@ -26,9 +27,9 @@ class _Stop {
       this.keywords, this.icon);
 }
 
-/// Demo 360° picture of the compound (painted stand-in; replace the
-/// file with a real 360° photo of Fasil Ghebbi when one is shot).
-const _panorama = 'assets/tour/gondar_castle_360.jpg';
+/// 360° picture of the compound — set in AppConstants.tourPanorama
+/// (a painted demo until a real 360° photo of Fasil Ghebbi is added).
+const _panorama = AppConstants.tourPanorama;
 
 /// Where each stop's building sits in the 360° picture (0..1 round),
 /// so "Look around" opens facing it.

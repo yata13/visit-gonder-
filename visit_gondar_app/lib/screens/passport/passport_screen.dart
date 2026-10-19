@@ -13,6 +13,7 @@ import '../../widgets/ui.dart';
 import '../auth/login_screen.dart';
 import '../timket/timket_roadmap.dart';
 import '../../widgets/motion.dart';
+import '../../core/constants/app_constants.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  GONDAR PASSPORT (tab 3) — design "Passport · home".
@@ -608,6 +609,25 @@ class _CheckInSheetState extends ConsumerState<_CheckInSheet> {
             prefixIcon: const Icon(Icons.qr_code_2_rounded),
           ),
         ),
+        // Demo: tap a code instead of visiting the site.
+        if (AppConstants.demoMode) ...[
+          const SizedBox(height: 12),
+          Text(am ? 'የሙከራ ኮዶች — አንዱን ይንኩ' : 'Demo codes — tap one to try',
+              style: const TextStyle(fontSize: 13,
+                  fontWeight: FontWeight.w700, color: AppColors.muted)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final (name, code) in AppConstants.demoPassportCodes)
+              ActionChip(
+                avatar: const Icon(Icons.qr_code_2_rounded, size: 16),
+                label: Text('$code · $name'),
+                onPressed: () => setState(() {
+                  _code.text = code;
+                  _error = null;
+                }),
+              ),
+          ]),
+        ],
         if (_error != null) ...[
           const SizedBox(height: 12),
           Container(

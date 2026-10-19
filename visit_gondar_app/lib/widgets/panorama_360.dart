@@ -14,6 +14,7 @@ import 'motion.dart';
 //  cylindrical or equirectangular panorama.
 // ═══════════════════════════════════════════════════════════════
 class Panorama360 extends StatefulWidget {
+  /// An asset path or an http(s) URL.
   final String asset;
 
   /// Where to face first: 0..1 of the way round the image.
@@ -56,8 +57,26 @@ class _Panorama360State extends State<Panorama360>
     _ticker.start();
   }
 
+  /// Loads the picture from the app's assets or, for an http(s)
+  /// link, from the web.
   Future<void> _load() async {
-    final data = await rootBundle.load(widget.asset);
+    final src = widget.asset;
+    if (src.startsWith('http')) {
+      final stream =
+          NetworkImage(src).resolve(ImageConfiguration.empty);
+      late final ImageStreamListener listener;
+      listener = ImageStreamListener((info, _) {
+        stream.removeListener(listener);
+        if (mounted) {
+          setState(() => _image = info.image);
+        } else {
+          info.image.dispose();
+        }
+      }, onError: (_, _) => stream.removeListener(listener));
+      stream.addListener(listener);
+      return;
+    }
+    final data = await rootBundle.load(src);
     final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
     final frame = await codec.getNextFrame();
     if (mounted) setState(() => _image = frame.image);

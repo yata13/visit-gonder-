@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/ui.dart';
 import '../premium/premium_screen.dart';
 import '../../widgets/motion.dart';
+import '../../core/constants/app_constants.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  ASK GONDAR — Premium AI guide (proposal page 7)
@@ -268,6 +269,7 @@ class _ChatState extends State<_Chat> {
       final data = res.data as Map<String, dynamic>;
       reply = (data['answer'] ?? '') as String;
       source = data['source'] as String?;
+      if (reply.trim().isEmpty) reply = _errorText(null);
     } on FunctionException catch (e) {
       final code = (e.details is Map) ? (e.details as Map)['error'] : null;
       reply = _errorText(code as String?);
@@ -285,6 +287,18 @@ class _ChatState extends State<_Chat> {
 
   String _errorText(String? code) {
     final am = widget.am;
+    // Demo: while the AI is not live yet, answer with a warm hello.
+    if (AppConstants.demoMode && code != 'daily_limit') {
+      return am
+          ? 'ሰላም! 👋 እኔ የጎንደር መሪዎ ነኝ።\n\n'
+              'ሙሉ መልሶቼ በቅርቡ ይመጣሉ — ይጠብቁን! 🏰\n\n'
+              'እስከዚያው ካርታውን፣ የጎንደር ፓስፖርትን እና የፋሲል ግቢን '
+              'የ360° ምናባዊ ጉብኝት ይሞክሩ።'
+          : "Hi there! 👋 Selam — I'm your Gondar guide.\n\n"
+              "My full answers are coming soon — stay tuned! 🏰\n\n"
+              'Meanwhile, explore the map, collect stamps in the Gondar '
+              'Passport, and look around Fasil Ghebbi in the 360° virtual tour.';
+    }
     return switch (code) {
       'premium_required' => am
           ? 'ይህ የፕሪሚየም አገልግሎት ነው።' : 'This is a Premium feature.',
