@@ -55,7 +55,9 @@ class AppConstants {
   //     tour. A full-circle panorama (about 4× wider than tall, or an
   //     equirectangular 2:1 photo). Paste a web URL of a real 360°
   //     photo here, or replace the local demo file.
-  static const tourPanorama = 'assets/tour/gondar_castle_360.jpg';
+  static const tourPanorama = 'assets/tour/castle_ruin_360.jpg';
+  // Painted demo of the Gondar compound, if you prefer it:
+  //   'assets/tour/gondar_castle_360.jpg'
 
   // ═══════════════════════════════════════════════════════════════
   //  DEMO MODE — for testing and presentations.

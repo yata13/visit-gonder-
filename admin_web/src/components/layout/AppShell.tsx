@@ -189,7 +189,8 @@ export default function AppShell() {
         </header>
 
         <main className="min-w-0 flex-1 p-4 md:p-6">
-          <div className="mx-auto w-full max-w-6xl">
+          {/* The dashboard is a wall of charts — let it use the full width. */}
+          <div className={cn("mx-auto w-full", location.pathname === "/" ? "max-w-none" : "max-w-6xl")}>
             <Outlet />
           </div>
         </main>

@@ -68,7 +68,7 @@ class _Panorama360State extends State<Panorama360>
       listener = ImageStreamListener((info, _) {
         stream.removeListener(listener);
         if (mounted) {
-          setState(() => _image = info.image);
+          setState(() => _setImage(info.image));
         } else {
           info.image.dispose();
         }
@@ -79,7 +79,14 @@ class _Panorama360State extends State<Panorama360>
     final data = await rootBundle.load(src);
     final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
     final frame = await codec.getNextFrame();
-    if (mounted) setState(() => _image = frame.image);
+    if (mounted) setState(() => _setImage(frame.image));
+  }
+
+  /// A 2:1 equirectangular photo spans 180° top to bottom, so open
+  /// zoomed in to a natural eye-level view; a wide strip needs less.
+  void _setImage(ui.Image image) {
+    _image = image;
+    if (image.width / image.height < 3) _zoom = _zoomAtStart = 1.9;
   }
 
   void _tick(Duration now) {
@@ -136,7 +143,7 @@ class _Panorama360State extends State<Panorama360>
               _tilt = (_tilt + d.focalPointDelta.dy / room).clamp(-1.0, 1.0);
             }
             if (d.pointerCount > 1) {
-              _zoom = (_zoomAtStart * d.scale).clamp(1.0, 2.6);
+              _zoom = (_zoomAtStart * d.scale).clamp(1.0, 3.4);
             }
           });
           widget.onHeading?.call(_heading * 360);

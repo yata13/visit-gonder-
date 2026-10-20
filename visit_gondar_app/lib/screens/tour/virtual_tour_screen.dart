@@ -31,9 +31,10 @@ class _Stop {
 /// (a painted demo until a real 360° photo of Fasil Ghebbi is added).
 const _panorama = AppConstants.tourPanorama;
 
-/// Where each stop's building sits in the 360° picture (0..1 round),
-/// so "Look around" opens facing it.
-const _panoramaHeadings = [0.12, 0.46, 0.26, 0.72, 0.95, 0.85, 0.46];
+/// Where to face first for each stop (0..1 of the way round the
+/// picture). With the castle-ruin photo every stop opens on its
+/// great arch, then turns a little so each stop feels different.
+const _panoramaHeadings = [0.5, 0.42, 0.58, 0.35, 0.65, 0.28, 0.5];
 
 const _stops = [
   _Stop(

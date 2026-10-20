@@ -137,7 +137,7 @@ export function Ticker() {
 }
 
 /** The most recent notification sent to tourists, in large type. */
-export function BroadcastCard({ tv }: { tv: boolean }) {
+export function BroadcastCard({ tv, compact = false }: { tv: boolean; compact?: boolean }) {
   const { events } = useLive();
   useTick(30_000);
   const last = events.find((e) => e.table === "notifications");
@@ -146,7 +146,8 @@ export function BroadcastCard({ tv }: { tv: boolean }) {
     <div
       key={last?.id ?? "none"}
       className={cn(
-        "rounded-xl border-2 bg-card p-5",
+        "rounded-xl border-2 bg-card",
+        compact ? "p-4" : "p-5",
         last?.fresh && "live-flash",
         last?.tone === "alert" ? "border-destructive/50" : "border-gold",
       )}
@@ -158,11 +159,23 @@ export function BroadcastCard({ tv }: { tv: boolean }) {
       </div>
       {last ? (
         <>
-          <div className={cn("font-extrabold leading-tight", tv ? "text-4xl" : "text-2xl")}>
+          <div
+            className={cn(
+              "font-extrabold leading-tight",
+              compact ? (tv ? "text-2xl" : "text-lg") : tv ? "text-4xl" : "text-2xl",
+            )}
+          >
             {last.title.replace(/^Notification sent · /, "")}
           </div>
           {last.detail && (
-            <p className={cn("mt-2 text-muted-foreground", tv ? "text-xl" : "text-base")}>{last.detail}</p>
+            <p
+              className={cn(
+                "mt-1 text-muted-foreground",
+                compact ? "line-clamp-2 text-sm" : tv ? "text-xl" : "text-base",
+              )}
+            >
+              {last.detail}
+            </p>
           )}
         </>
       ) : (
@@ -201,12 +214,12 @@ function FeedRow({ e }: { e: LiveEvent }) {
 }
 
 /** Everything happening, newest first; new rows slide in. */
-export function LiveFeed({ tv }: { tv: boolean }) {
+export function LiveFeed({ tv, fill = false }: { tv: boolean; fill?: boolean }) {
   const { events } = useLive();
   useTick(30_000);
 
   return (
-    <div className="flex min-h-0 flex-col rounded-xl border bg-card">
+    <div className={cn("flex min-h-0 flex-col rounded-xl border bg-card", fill && "flex-1")}>
       <div className="flex items-center gap-2 border-b px-4 py-3">
         <span className="live-dot h-2 w-2 rounded-full bg-success" />
         <h3 className="text-sm font-bold">Live activity</h3>
@@ -215,7 +228,12 @@ export function LiveFeed({ tv }: { tv: boolean }) {
       {events.length === 0 ? (
         <p className="p-8 text-center text-sm text-muted-foreground">Waiting for the first event…</p>
       ) : (
-        <ul className={cn("divide-y overflow-y-auto", tv ? "max-h-[60vh]" : "max-h-[460px]")}>
+        <ul
+          className={cn(
+            "divide-y overflow-y-auto",
+            fill ? "max-h-[520px] flex-1" : tv ? "max-h-[60vh]" : "max-h-[460px]",
+          )}
+        >
           {events.map((e) => (
             <FeedRow key={e.id} e={e} />
           ))}
