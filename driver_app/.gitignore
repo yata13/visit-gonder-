@@ -50,3 +50,7 @@ app.*.map.json
 # Secrets — copy .env.example to .env locally, never commit the real one
 .env
 !.env.example
+
+# Made again by `flutter pub get` on every PC (differs per Flutter
+# version), so git does not track it.
+pubspec.lock

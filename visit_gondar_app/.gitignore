@@ -47,3 +47,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Made again by `flutter pub get` on every PC. Each Flutter version
+# writes them a little differently, which blocked `git pull`, so git
+# does not track them.
+pubspec.lock
+macos/Flutter/GeneratedPluginRegistrant.swift
+linux/flutter/generated_plugin*
+windows/flutter/generated_plugin*
