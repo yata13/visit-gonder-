@@ -58,6 +58,9 @@ const WATCHED = [
   "guides",
   "events",
   "places",
+  "rides",
+  "drivers",
+  "partner_requests",
 ] as const;
 
 const MAX_EVENTS = 60;
@@ -72,14 +75,80 @@ const LISTING_LABEL: Record<string, string> = {
   places: "Map place",
 };
 
-/** Turns a database change into a line people can read on the wall. */
+/* Driver location pings rewrite rides / drivers rows every few seconds.
+   Only a change of these fields is news; pings just refresh those pages
+   now and then. */
+const SIGNATURE: Partial<Record<string, (r: Row) => string>> = {
+  rides: (r) => `${r.status}|${r.driver_id ?? ""}`,
+  drivers: (r) => `${r.status}|${r.is_online}`,
+};
+const keyOf = (table: string, r: Row) => `${table}:${r.id ?? r.user_id}`;
+
+/** Turns a database change into a line people can read on the wall.
+ *  `before` is the row's last known signature (rides / drivers). */
 function describe(
   table: string,
   kind: "INSERT" | "UPDATE" | "DELETE",
   row: Row,
+  before?: string,
 ): Omit<LiveEvent, "id" | "at" | "fresh" | "table"> | null {
   const s = (v: unknown) => (v === null || v === undefined ? "" : String(v));
+  const vehicle = (r: Row) => (r.vehicle_type === "taxi" ? "Taxi" : "Bajaj");
   switch (table) {
+    case "rides": {
+      const route = `${s(row.pickup_label) || "pickup"} → ${s(row.dropoff_label) || "destination"}`;
+      if (kind === "INSERT")
+        return {
+          title: `Ride requested · ${vehicle(row)}`,
+          detail: `${s(row.rider_name) || "A tourist"} · ${route} · ${formatMoney(row.fare_estimate)}`,
+          tone: "info",
+        };
+      if (kind !== "UPDATE") return null;
+      switch (row.status) {
+        case "accepted":
+          return { title: `Ride accepted · ${s(row.driver_name)}`, detail: `${s(row.vehicle_plate)} · ${route}`, tone: "info" };
+        case "arrived":
+          return { title: `Driver at pickup · ${s(row.driver_name)}`, detail: s(row.pickup_label), tone: "info" };
+        case "in_progress":
+          return { title: "Trip started", detail: `${s(row.driver_name)} · ${route}`, tone: "info" };
+        case "completed":
+          return { title: `Trip completed · ${formatMoney(row.fare_estimate)}`, detail: `${s(row.driver_name)} · ${route}`, tone: "money" };
+        case "cancelled":
+          return { title: `Ride cancelled by ${s(row.cancelled_by) || "someone"}`, detail: s(row.cancel_reason) || route, tone: "alert" };
+        case "expired":
+          return { title: "Ride request expired — no driver free", detail: route, tone: "alert" };
+        case "requested":
+          return before?.startsWith("requested") ? null : { title: "Driver handed back a ride", detail: route, tone: "alert" };
+        default:
+          return null;
+      }
+    }
+    case "drivers": {
+      if (kind === "INSERT")
+        return {
+          title: `New driver application · ${s(row.full_name)}`,
+          detail: `${vehicle(row)} ${s(row.plate)} — approve on the Drivers page`,
+          tone: "alert",
+        };
+      if (kind !== "UPDATE") return null;
+      const [prevStatus, prevOnline] = (before ?? "").split("|");
+      if (row.status !== prevStatus) {
+        if (row.status === "approved") return { title: `Driver approved · ${s(row.full_name)}`, detail: `${vehicle(row)} ${s(row.plate)}`, tone: "info" };
+        if (row.status === "suspended") return { title: `Driver paused · ${s(row.full_name)}`, detail: s(row.plate), tone: "alert" };
+        return { title: `Driver needs a new check · ${s(row.full_name)}`, detail: `New vehicle or plate: ${s(row.plate)}`, tone: "alert" };
+      }
+      if (row.is_online && prevOnline === "false")
+        return { title: `Driver online · ${s(row.full_name)}`, detail: `${vehicle(row)} ${s(row.plate)}`, tone: "info" };
+      return null;
+    }
+    case "partner_requests":
+      return kind === "INSERT"
+        ? {
+            title: `Partner request · ${s(row.business_name)}`,
+            detail: `${row.business_type === "guide" ? "Tour guide" : "Hotel"} · ${s(row.email)} — link it on Partners`,
+            tone: "alert",
+          }
+        : null;
     case "notifications":
       if (kind !== "INSERT") return null;
       return {
@@ -266,11 +335,44 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
       refreshTimer = setTimeout(() => queryClient.invalidateQueries(), 250);
     };
 
+    // Last known status of rides / drivers, so a location ping is not news.
+    const known = new Map<string, string>();
+    Promise.all([
+      supabase.from("rides").select("id, status, driver_id").order("created_at", { ascending: false }).limit(500),
+      supabase.from("drivers").select("user_id, status, is_online").limit(2000),
+    ])
+      .then(([r, d]) => {
+        for (const x of (r.data ?? []) as Row[]) if (!known.has(keyOf("rides", x))) known.set(keyOf("rides", x), SIGNATURE.rides!(x));
+        for (const x of (d.data ?? []) as Row[]) if (!known.has(keyOf("drivers", x))) known.set(keyOf("drivers", x), SIGNATURE.drivers!(x));
+      })
+      .catch(() => {});
+    let pingTimer: ReturnType<typeof setTimeout> | undefined;
+    const refreshAfterPings = () => {
+      if (pingTimer) return;
+      pingTimer = setTimeout(() => {
+        pingTimer = undefined;
+        void queryClient.invalidateQueries({ queryKey: ["rides"] });
+        void queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      }, 15_000);
+    };
+
     const onChange = (table: string) => (payload: RealtimePostgresChangesPayload<Row>) => {
       setLastUpdate(new Date());
-      refreshSoon();
       const row = (payload.eventType === "DELETE" ? payload.old : payload.new) as Row;
-      const d = describe(table, payload.eventType, row ?? {});
+      let before: string | undefined;
+      const sig = SIGNATURE[table];
+      if (sig && row && payload.eventType !== "DELETE") {
+        const key = keyOf(table, row);
+        const now = sig(row);
+        before = known.get(key);
+        known.set(key, now);
+        if (payload.eventType === "UPDATE" && (before === now || before === undefined)) {
+          refreshAfterPings(); // a location ping (or a row from before we started)
+          return;
+        }
+      }
+      refreshSoon();
+      const d = describe(table, payload.eventType, row ?? {}, before);
       if (!d) return;
       const event: LiveEvent = {
         ...d,
@@ -299,6 +401,7 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
       clearTimeout(refreshTimer);
+      clearTimeout(pingTimer);
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
