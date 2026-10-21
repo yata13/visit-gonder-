@@ -2736,6 +2736,131 @@ $$;
 revoke all on function public.driver_open_requests() from public, anon;
 grant execute on function public.driver_open_requests() to authenticated;
 
+-- ─────────────────────────  0020_bookings_respect_calendar.sql  ─────────────────────────
+-- ============================================================
+-- 0020  Bookings respect the partner's calendar
+--
+-- Hotels and guides set their days on the Partners website
+-- (availability table, 0008 / 0018). Until now nothing read it, so a
+-- closed or full day could still be booked. Now every new booking
+-- is checked, night by night (hotel) or day by day (guide):
+--   · a day marked closed            → refused
+--   · capacity reached on a day      → refused ("fully booked")
+--     used = booked (rooms the partner sold elsewhere)
+--          + active online bookings (pending / confirmed / approved)
+--   · a day with no row              → open, as before
+-- The tourist app shows the message on the booking screen.
+-- The city team (editors/admins) can still add bookings on any day.
+-- Idempotent.
+-- ============================================================
+
+create or replace function public.check_booking_availability()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_day  date;
+  v_av   public.availability;
+  v_used int;
+begin
+  if new.item_id is null or new.check_in is null or new.check_out is null
+     or new.item_type not in ('hotel', 'guide')
+     or coalesce(new.status, 'pending') not in ('pending', 'confirmed', 'approved')
+     or public.is_editor() then
+    return new;
+  end if;
+
+  -- One booking at a time per business, so two people cannot take
+  -- the last room together.
+  perform pg_advisory_xact_lock(hashtextextended(new.item_type || ':' || new.item_id::text, 0));
+
+  for v_day in
+    select d::date
+      from generate_series(new.check_in, greatest(new.check_out - 1, new.check_in),
+                           interval '1 day') as d
+  loop
+    select * into v_av from public.availability
+     where business_type = new.item_type and business_id = new.item_id and day = v_day;
+    continue when not found;
+
+    if v_av.is_closed then
+      raise exception 'Not available on % — please choose other dates.',
+        to_char(v_day, 'DD Mon YYYY') using errcode = 'P0001';
+    end if;
+
+    select count(*) into v_used from public.bookings b
+     where b.item_type = new.item_type and b.item_id = new.item_id
+       and b.status in ('pending', 'confirmed', 'approved')
+       and b.check_in <= v_day and b.check_out > v_day;
+    if v_av.booked + v_used >= v_av.capacity then
+      raise exception 'Fully booked on % — please choose other dates.',
+        to_char(v_day, 'DD Mon YYYY') using errcode = 'P0001';
+    end if;
+  end loop;
+  return new;
+end;
+$$;
+
+revoke all on function public.check_booking_availability() from public, anon, authenticated;
+
+drop trigger if exists trg_check_booking_availability on public.bookings;
+create trigger trg_check_booking_availability
+  before insert on public.bookings
+  for each row execute function public.check_booking_availability();
+
+-- ─────────────────────────  0021_partner_photo_uploads.sql  ─────────────────────────
+-- ============================================================
+-- 0021  Partners upload photos of their own listing
+--
+-- The Partners website uploads hotel / guide photos to the public
+-- listing buckets (0005), inside a folder named after the business:
+--     hotel-images/partners/<hotel id>/<file>
+--     guide-images/partners/<guide id>/<file>
+-- Only the linked owner of that hotel / guide may add or remove
+-- files there. The city team keeps full access (0005 policies).
+-- Idempotent.
+-- ============================================================
+
+-- True when the folder name is the id of a business I own. A folder
+-- that is not an id is simply "no".
+create or replace function public.owns_business_folder(p_type text, p_folder text)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  return public.owns_business(p_type, p_folder::uuid);
+exception when invalid_text_representation then
+  return false;
+end;
+$$;
+revoke all on function public.owns_business_folder(text, text) from public;
+grant execute on function public.owns_business_folder(text, text) to authenticated;
+
+drop policy if exists listing_images_owner_insert on storage.objects;
+create policy listing_images_owner_insert on storage.objects for insert
+  with check (
+    bucket_id in ('hotel-images', 'guide-images')
+    and (storage.foldername(name))[1] = 'partners'
+    and public.owns_business_folder(
+          case bucket_id when 'hotel-images' then 'hotel' else 'guide' end,
+          (storage.foldername(name))[2])
+  );
+
+drop policy if exists listing_images_owner_delete on storage.objects;
+create policy listing_images_owner_delete on storage.objects for delete
+  using (
+    bucket_id in ('hotel-images', 'guide-images')
+    and (storage.foldername(name))[1] = 'partners'
+    and public.owns_business_folder(
+          case bucket_id when 'hotel-images' then 'hotel' else 'guide' end,
+          (storage.foldername(name))[2])
+  );
+
 
 -- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 --  FINAL STEP 2: the report. Read the rows this returns:

@@ -152,6 +152,74 @@ begin
   if v_n <> 1 then raise exception 'FAIL 9 tourist does not see the confirmation'; end if;
   raise notice 'PASS 9 tourist sees the confirmed booking';
 
+  -- 10) bookings respect the calendar (0020)
+  begin  -- the day closed in test 8
+    perform public.create_booking('hotel', v_hotel, current_date + 9, current_date + 11, 1,
+                                  'Sara Tourist', '+251922000000');
+    raise exception 'FAIL 10 booked a closed day';
+  exception when others then
+    if sqlerrm like 'FAIL%' then raise; end if;
+    if sqlerrm not like 'Not available on%' then raise exception 'FAIL 10 wrong error: %', sqlerrm; end if;
+  end;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_owner::text, 'role', 'authenticated', 'email', v_email)::text, true);
+  insert into public.availability (business_type, business_id, day, capacity)
+  values ('hotel', v_hotel, current_date + 20, 1);
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_tourist::text, 'role', 'authenticated', 'email', 'tourist@x.com')::text, true);
+  v_booking := public.create_booking('hotel', v_hotel, current_date + 20, current_date + 21, 1,
+                                     'Sara Tourist', '+251922000000');
+  begin  -- capacity 1 is now used
+    perform public.create_booking('hotel', v_hotel, current_date + 19, current_date + 22, 1,
+                                  'Second Guest', '+251922000001');
+    raise exception 'FAIL 10b booked a full day';
+  exception when others then
+    if sqlerrm like 'FAIL%' then raise; end if;
+    if sqlerrm not like 'Fully booked on%' then raise exception 'FAIL 10b wrong error: %', sqlerrm; end if;
+  end;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_owner::text, 'role', 'authenticated', 'email', v_email)::text, true);
+  perform public.partner_set_booking_status(v_booking.id, 'rejected');
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_tourist::text, 'role', 'authenticated', 'email', 'tourist@x.com')::text, true);
+  perform public.create_booking('hotel', v_hotel, current_date + 19, current_date + 22, 1,
+                                'Second Guest', '+251922000001');  -- declined one freed the room
+  perform public.create_booking('hotel', v_hotel, current_date + 30, current_date + 32, 1,
+                                'Third Guest', '+251922000002');   -- no calendar rows: open
+  raise notice 'PASS 10 closed and full days refused; declining frees the room';
+
+  -- 11) photo uploads (0021): own listing folder only
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_owner::text, 'role', 'authenticated', 'email', v_email)::text, true);
+  insert into storage.objects (bucket_id, name)
+  values ('hotel-images', 'partners/' || v_hotel || '/lobby.jpg');
+  begin
+    insert into storage.objects (bucket_id, name)
+    values ('hotel-images', 'partners/' || v_hotel2 || '/fake.jpg');
+    raise exception 'FAIL 11 uploaded into another hotel''s folder';
+  exception when others then
+    if sqlerrm like 'FAIL%' then raise; end if;
+  end;
+  begin
+    insert into storage.objects (bucket_id, name) values ('hotel-images', 'banner.jpg');
+    raise exception 'FAIL 11b uploaded outside the partners folder';
+  exception when others then
+    if sqlerrm like 'FAIL%' then raise; end if;
+  end;
+  begin
+    insert into storage.objects (bucket_id, name)
+    values ('hotel-images', 'partners/not-an-id/x.jpg');
+    raise exception 'FAIL 11c odd folder name accepted';
+  exception when others then
+    if sqlerrm like 'FAIL%' then raise; end if;
+  end;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_other::text, 'role', 'authenticated')::text, true);
+  delete from storage.objects where name = 'partners/' || v_hotel || '/lobby.jpg';
+  get diagnostics v_n = row_count;
+  if v_n <> 0 then raise exception 'FAIL 11d a stranger deleted the owner''s photo'; end if;
+  raise notice 'PASS 11 owners upload photos for their own listing only';
+
   reset role;
   raise notice '✅ ALL PARTNER TESTS PASSED';
 end $$;

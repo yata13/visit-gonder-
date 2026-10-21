@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+/* Visit Gondar Partners theme — same brand palette as the app and admin:
+   gold #D5A562 · cream #EEEBE9 · brown #7C4928 (deep brown #2A1A0F). */
+:root {
+  --background: 24 13% 92%; /* #EEEBE9 cream */
+  --foreground: 23 39% 13%; /* #2E1E14 dark brown text */
+  --card: 0 0% 100%;
+  --card-foreground: 23 39% 13%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 23 39% 13%;
+  --primary: 24 51% 32%; /* #7C4928 brown — main buttons */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 36 61% 91%; /* #F6EBDA gold wash */
+  --secondary-foreground: 24 51% 32%;
+  --muted: 27 15% 88%; /* #E5E0DC */
+  --muted-foreground: 26 15% 36%; /* #6B5B4F */
+  --accent: 36 61% 91%; /* gold wash hover */
+  --accent-foreground: 23 39% 13%;
+  --destructive: 0 75% 42%; /* #BA1A1A */
+  --destructive-foreground: 0 0% 100%;
+  --border: 30 22% 81%; /* #D9CEC3 */
+  --input: 30 22% 78%;
+  --ring: 35 58% 61%; /* #D5A562 gold */
+  --radius: 0.625rem;
+
+  /* Brand gold for highlights (active nav, badges, live wall) */
+  --gold: 35 58% 61%; /* #D5A562 */
+
+  /* Status colors */
+  --success: 150 60% 30%; /* #1F7A4D */
+  --success-bg: 140 40% 92%;
+  --warning: 34 56% 42%; /* #A8732F amber-gold */
+  --warning-bg: 36 61% 91%;
+  --info: 24 51% 32%;
+  --info-bg: 36 61% 91%;
+
+  /* Deep brown sidebar */
+  --sidebar: 24 47% 11%; /* #2A1A0F */
+  --sidebar-hover: 25 45% 16%; /* #3A2516 */
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-success: hsl(var(--success));
+  --color-success-bg: hsl(var(--success-bg));
+  --color-warning: hsl(var(--warning));
+  --color-warning-bg: hsl(var(--warning-bg));
+  --color-info: hsl(var(--info));
+  --color-info-bg: hsl(var(--info-bg));
+  --color-gold: hsl(var(--gold));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-hover: hsl(var(--sidebar-hover));
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      "Noto Sans Ethiopic",
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
+  }
+}
+
+/* ── Live dashboard motion ─────────────────────────────────────── */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.85); }
+}
+.live-dot { animation: live-pulse 1.6s ease-in-out infinite; }
+
+@keyframes live-slide-in {
+  from { opacity: 0; transform: translateY(-10px); background-color: hsl(var(--gold) / 0.25); }
+  to { opacity: 1; transform: none; }
+}
+.live-slide-in { animation: live-slide-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), live-glow 3s ease-out; }
+
+@keyframes live-glow {
+  from { background-color: hsl(var(--gold) / 0.22); }
+  to { background-color: transparent; }
+}
+.live-flash { animation: live-glow 3s ease-out; }
+
+/* Page content eases in, like the app. */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.fade-up { animation: fade-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot, .live-slide-in, .live-flash, .fade-up { animation: none; }
+}
