@@ -259,6 +259,8 @@ class RealtimeAlerts {
           'Your driver could not come. Your request is open again.'),
       'cancelled' when r['cancelled_by'] == 'admin' =>
           ('Ride cancelled', 'The Visit Gondar team cancelled this ride.'),
+      'expired' => ('No driver free right now',
+          'Nobody could take your ride in 15 minutes. Open Ride to try again.'),
       _ => null,
     };
     if (status == 'accepted') _announced.add('ride:$id:accepted');

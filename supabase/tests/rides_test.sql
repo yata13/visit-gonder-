@@ -224,6 +224,38 @@ begin
   if v_n <> 0 then raise exception 'FAIL 14c anonymous visitors see rides'; end if;
   raise notice 'PASS 14 rides and driver profiles are private';
 
+  -- 15) the drivers' request list (0019): same type only, old ones expire
+  reset role;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_tourist::text, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  v_ride := public.request_ride('bajaj', 12.6075, 37.4592, 'Piassa',
+                                12.6081, 37.4795, 'Debre Berhan Selassie',
+                                'Sara', '+251922000000');
+  select count(*) into v_n from public.driver_open_requests();
+  if v_n <> 0 then raise exception 'FAIL 15 a tourist gets the drivers'' list'; end if;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_driver2::text, 'role', 'authenticated')::text, true);
+  select count(*) into v_n from public.driver_open_requests() where id = v_ride.id;
+  if v_n <> 1 then raise exception 'FAIL 15b bajaj driver misses the request'; end if;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_taxi::text, 'role', 'authenticated')::text, true);
+  select count(*) into v_n from public.driver_open_requests() where id = v_ride.id;
+  if v_n <> 0 then raise exception 'FAIL 15c taxi driver gets a bajaj request'; end if;
+  reset role;
+  update public.rides set created_at = now() - interval '20 minutes' where id = v_ride.id;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_driver2::text, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  select count(*) into v_n from public.driver_open_requests() where id = v_ride.id;
+  if v_n <> 0 then raise exception 'FAIL 15d a 20-minute-old request is still listed'; end if;
+  reset role;
+  select * into v_ride from public.rides where id = v_ride.id;
+  if v_ride.status <> 'expired' or v_ride.cancelled_by <> 'system' then
+    raise exception 'FAIL 15e old request not expired (status %)', v_ride.status;
+  end if;
+  raise notice 'PASS 15 drivers'' list: own vehicle type only; old requests expire';
+
   reset role;
   raise notice '✅ ALL RIDE TESTS PASSED';
 end $$;

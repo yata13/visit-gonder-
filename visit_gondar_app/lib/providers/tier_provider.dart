@@ -41,7 +41,7 @@ final userTierProvider = FutureProvider<UserTier>((ref) async {
 
   try {
     // is_premium() also covers expiry and team members.
-    final premium = await db.rpc('is_premium') == true;
+    final premium = await db.rpc('is_premium', params: const {}) == true;
     final tierRow = await db
         .from('user_tiers')
         .select('premium_until')
