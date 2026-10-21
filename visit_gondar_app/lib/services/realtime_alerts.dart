@@ -8,6 +8,7 @@ import '../screens/map/map_screen.dart';
 import '../screens/posts/feed_screen.dart';
 import '../screens/booking/my_bookings_screen.dart';
 import '../screens/emergency/emergency_screen.dart';
+import '../screens/ride/ride_screen.dart';
 import '../widgets/motion.dart';
 import 'phone_notifications.dart';
 
@@ -240,6 +241,37 @@ class RealtimeAlerts {
     );
   }
 
+  static void _announceRide(Map<String, dynamic> r) {
+    final me = _myId;
+    if (me == null || r['rider_id'] != me) return;
+    final id = '${r['id']}', status = (r['status'] ?? '') as String;
+    final wasAccepted = _announced.contains('ride:$id:accepted');
+    if (!_announced.add('ride:$id:$status:${r['driver_id']}')) return;
+    final plate = r['vehicle_plate'] ?? '';
+    final (String, String)? text = switch (status) {
+      'accepted' => (
+          '🛺 ${r['driver_name'] ?? 'Your driver'} is on the way',
+          'Plate $plate. Be ready at ${r['pickup_label'] ?? 'your pickup point'}.'),
+      'arrived' => ('📍 Your driver is here', 'Look for plate $plate.'),
+      'completed' => ('✅ You have arrived',
+          'Pay ${(r['fare_estimate'] as num?)?.round() ?? ''} ETB in cash, then rate your driver.'),
+      'requested' when wasAccepted => ('🔄 Finding you another driver',
+          'Your driver could not come. Your request is open again.'),
+      'cancelled' when r['cancelled_by'] == 'admin' =>
+          ('Ride cancelled', 'The Visit Gondar team cancelled this ride.'),
+      _ => null,
+    };
+    if (status == 'accepted') _announced.add('ride:$id:accepted');
+    if (status == 'requested') _announced.remove('ride:$id:accepted');
+    if (text == null) return;
+    _show(
+      title: text.$1,
+      message: text.$2,
+      urgent: false,
+      onTap: () => _open(const RideScreen()),
+    );
+  }
+
   /// Called by the booking screen right after a booking is saved, so
   /// the phone shows it even before the live event arrives.
   static void bookingCreated(Map<String, dynamic> booking) =>
@@ -295,6 +327,13 @@ class RealtimeAlerts {
           schema: 'public',
           table: 'bookings',
           callback: (payload) => _announceBooking(payload.newRecord),
+        )
+        // The visitor's own ride: driver found, arrived, trip done.
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'rides',
+          callback: (payload) => _announceRide(payload.newRecord),
         );
     for (final t in _liveTables) {
       channel = channel.onPostgresChanges(

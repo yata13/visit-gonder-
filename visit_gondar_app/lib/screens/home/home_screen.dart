@@ -23,7 +23,6 @@ import '../timket/timket_live.dart';
 import '../hotels/hotels_screen.dart';
 import '../guides/guides_screen.dart';
 import '../map/map_screen.dart';
-import '../stay/stay_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../posts/post_detail_screen.dart';
 import '../posts/feed_screen.dart';
@@ -31,6 +30,7 @@ import '../planner/trip_planner_screen.dart';
 import '../../widgets/motion.dart';
 import '../../widgets/timket_art.dart';
 import '../../services/realtime_alerts.dart';
+import '../ride/ride_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  HOME (tab 1) — design "Home A · Timket hero".
@@ -357,10 +357,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             _Tile(
               icon: Icons.electric_rickshaw_outlined,
-              title: am ? 'ባጃጅ' : 'Bajaj',
-              sub: am ? 'አሽከርካሪ ይደውሉ' : 'Call a driver',
-              onTap: () =>
-                  pushScreen(context, const StayScreen(initialTab: 1)),
+              title: am ? 'ጉዞ' : 'Ride',
+              sub: am ? 'ባጃጅ እና ታክሲ' : 'Bajaj & taxi',
+              onTap: () => pushScreen(context, const RideScreen()),
             ),
             _Tile(
               dark: true,

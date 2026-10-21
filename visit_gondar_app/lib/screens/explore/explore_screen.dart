@@ -10,6 +10,7 @@ import '../../widgets/ui.dart';
 import '../map/map_screen.dart';
 import '../stay/stay_screen.dart';
 import '../../widgets/motion.dart';
+import '../ride/ride_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  EXPLORE (tab 2) — design "Explore · list".
@@ -242,7 +243,43 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
           children: [
+            // Request a ride from a partner driver (live).
             Reveal(child: PressScale(
+              onTap: () => pushScreen(context, const RideScreen()),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: AppDecor.night(radius: 24),
+                child: Row(children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: const BoxDecoration(
+                        color: AppColors.brandGold, shape: BoxShape.circle),
+                    child: const Icon(Icons.electric_rickshaw_rounded,
+                        color: AppColors.black),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      Text(am ? 'ጉዞ ይጥሩ' : 'Request a ride',
+                          style: const TextStyle(fontSize: 17,
+                              fontWeight: FontWeight.w800, color: Colors.white)),
+                      const SizedBox(height: 2),
+                      Text(am
+                          ? 'ባጃጅ ወይም ታክሲ · ዋጋውን አስቀድመው ይወቁ · ሾፌሩን በቀጥታ ይከተሉ'
+                          : 'Bajaj or taxi · price up front · follow your driver live',
+                          style: const TextStyle(fontSize: 13,
+                              color: AppColors.onDarkMuted)),
+                    ]),
+                  ),
+                  const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                ]),
+              ),
+            )),
+            const SizedBox(height: 12),
+            Reveal(delay: const Duration(milliseconds: 60), child: PressScale(
               onTap: () =>
                   pushScreen(context, const StayScreen(initialTab: 1)),
               child: GlassPanel(

@@ -55,6 +55,10 @@ class AppConstants {
   //     tour. A full-circle panorama (about 4× wider than tall, or an
   //     equirectangular 2:1 photo). Paste a web URL of a real 360°
   //     photo here, or replace the local demo file.
+  //  👉 mapTiles = where the map pictures come from (OpenStreetMap,
+  //     free, no key). Change here to use another map style.
+  static String mapTiles = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
   static const tourPanorama = 'assets/tour/castle_ruin_360.jpg';
   // Painted demo of the Gondar compound, if you prefer it:
   //   'assets/tour/gondar_castle_360.jpg'
