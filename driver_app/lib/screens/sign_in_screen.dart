@@ -5,8 +5,10 @@ import '../theme.dart';
 import '../widgets/common.dart';
 
 // ═══════════════════════════════════════════════════════════════
-//  Sign in / create a driver account (email + password, the same
-//  Supabase accounts as the tourist app).
+//  Sign in only — no "create account" here. For security, driver
+//  accounts are made by the Visit Gondar office in person (they
+//  check your ID and vehicle documents), who then give you the
+//  email and password to sign in with.
 // ═══════════════════════════════════════════════════════════════
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -16,15 +18,13 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen> {
   final _form = GlobalKey<FormState>();
-  final _name = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  bool _create = false, _busy = false, _hide = true;
+  bool _busy = false, _hide = true;
   String? _error, _info;
 
   @override
   void dispose() {
-    _name.dispose();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -38,25 +38,11 @@ class _SignInScreenState extends State<SignInScreen> {
       _error = null;
       _info = null;
     });
-    final auth = Supabase.instance.client.auth;
-    final email = _email.text.trim();
     try {
-      if (_create) {
-        final res = await auth.signUp(
-          email: email,
-          password: _password.text,
-          data: {'full_name': _name.text.trim()},
-        );
-        if (res.session == null && mounted) {
-          // The project asks new accounts to confirm their email first.
-          setState(() {
-            _create = false;
-            _info = 'We sent a link to $email. Open it, then sign in here.';
-          });
-        }
-      } else {
-        await auth.signInWithPassword(email: email, password: _password.text);
-      }
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: _email.text.trim(),
+        password: _password.text,
+      );
       // Signed in: the AuthGate moves on by itself.
     } catch (e) {
       if (mounted) setState(() => _error = errorText(e));
@@ -108,51 +94,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       style: TextStyle(fontSize: 15.5, height: 1.4, color: VG.muted),
                     ),
                   ),
-                  const SizedBox(height: 28),
-                  FadeIn(
-                    delay: 200,
-                    child: SegmentedButton<bool>(
-                      segments: const [
-                        ButtonSegment(value: false, label: Text('Sign in'), icon: Icon(Icons.login_rounded)),
-                        ButtonSegment(value: true, label: Text('New driver'), icon: Icon(Icons.person_add_alt_1_rounded)),
-                      ],
-                      selected: {_create},
-                      showSelectedIcon: false,
-                      style: SegmentedButton.styleFrom(
-                        selectedBackgroundColor: VG.brown,
-                        selectedForegroundColor: Colors.white,
-                        backgroundColor: Colors.white,
-                        minimumSize: const Size(48, 48),
-                      ),
-                      onSelectionChanged: (s) => setState(() {
-                        _create = s.first;
-                        _error = null;
-                        _info = null;
-                      }),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 260),
-                    curve: Curves.easeOutCubic,
-                    child: _create
-                        ? Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: TextFormField(
-                              controller: _name,
-                              textCapitalization: TextCapitalization.words,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Full name',
-                                prefixIcon: Icon(Icons.badge_outlined),
-                              ),
-                              validator: (v) => _create && (v ?? '').trim().length < 2
-                                  ? 'Type your full name'
-                                  : null,
-                            ),
-                          )
-                        : const SizedBox(width: double.infinity),
-                  ),
+                  const SizedBox(height: 32),
                   TextFormField(
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
@@ -181,13 +123,10 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     validator: (v) => (v ?? '').length < 6 ? 'At least 6 characters' : null,
                   ),
-                  if (!_create)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(onPressed: _busy ? null : _forgot, child: const Text('Forgot password?')),
-                    )
-                  else
-                    const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(onPressed: _busy ? null : _forgot, child: const Text('Forgot password?')),
+                  ),
                   if (_error != null) _Note(text: _error!, color: VG.danger, icon: Icons.error_outline_rounded),
                   if (_info != null) _Note(text: _info!, color: VG.online, icon: Icons.mark_email_read_outlined),
                   const SizedBox(height: 6),
@@ -197,13 +136,15 @@ class _SignInScreenState extends State<SignInScreen> {
                         ? const SizedBox(
                             width: 22, height: 22,
                             child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                        : Text(_create ? 'Create account' : 'Sign in'),
+                        : const Text('Sign in'),
                   ),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Already use the Visit Gondar app? Sign in with the same account.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: VG.muted, fontSize: 13.5),
+                  const SizedBox(height: 22),
+                  const _Note(
+                    text: 'New driver? Visit the Visit Gondar office with your ID and vehicle '
+                        'documents. The office sets up your account and gives you an email '
+                        'and password to sign in with here.',
+                    color: VG.muted,
+                    icon: Icons.storefront_outlined,
                   ),
                 ]),
               ),
@@ -229,7 +170,7 @@ class _Note extends StatelessWidget {
           color: color.withValues(alpha: 0.09),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(children: [
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(width: 10),
           Expanded(child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w600))),

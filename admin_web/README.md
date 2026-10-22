@@ -19,8 +19,8 @@ It is the full conversion of the old Flutter Web admin — same burnt-orange
 | Safety | Danger-zone map (click to place, severity, radius) shown to tourists |
 | Emergency | Live SOS / call / transport requests — respond, resolve, delete |
 | Rides | Live map and list of bajaj / taxi rides, cancel a ride, change the prices (ETB) |
-| Drivers | Approve or pause drivers who signed up in the **Visit Gondar Driver** app; who is online |
-| Partners | Link hotels and guides to their owner's account on the **Visit Gondar Partners** website |
+| Drivers | Add a driver (after creating their Supabase sign-in), approve or pause them, see who is online |
+| Partners | Link a hotel or guide to its owner's account (sign-up is office-only) |
 | Availability | Per-day capacity calendar for each hotel or guide |
 | Gondar Passport | Check-in points (with printable QR codes), stories, trivia |
 | Users & roles | List users, grant/revoke **admin** / **editor** roles |
@@ -100,6 +100,18 @@ the user profile — so nobody can promote themselves. The app:
 
 `editor` can manage content; only `admin` can manage users, roles and
 see everything else. Tourists get a friendly "no access" screen.
+
+## Driver and partner accounts are office-only
+
+The Driver app and the Partners website have no sign-up screen, on
+purpose — drivers and hotel/guide partners need to be checked in person
+before they can ride with or book tourists. To add one:
+
+1. **Supabase Dashboard → Authentication → Users → Add user** — their
+   email + a password you give them.
+2. Then here: **Drivers → Add driver** (fills in their details, already
+   approved), or **Partners → Link an owner by email** (attaches that
+   email to one of their hotels/guides).
 
 ## Known v1 limits
 

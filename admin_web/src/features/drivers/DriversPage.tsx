@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { BadgeCheck, Ban, CarTaxiFront, Hourglass, Phone, Search, Star, Wifi } from "lucide-react";
+import { BadgeCheck, Ban, CarTaxiFront, Hourglass, Phone, Search, Star, UserPlus, Wifi } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { cn, errorMessage, formatDate, timeAgo } from "@/lib/utils";
 import type { Tables } from "@/lib/database.types";
@@ -9,6 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Field } from "@/components/form-fields";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Driver = Tables<"drivers">;
 type Filter = "pending" | "approved" | "suspended" | "all";
@@ -47,6 +56,7 @@ export default function DriversPage() {
   const [filter, setFilter] = React.useState<Filter>("pending");
   const [q, setQ] = React.useState("");
   const [suspend, setSuspend] = React.useState<Driver | undefined>();
+  const [adding, setAdding] = React.useState(false);
 
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "approved" | "suspended" | "pending" }) => {
@@ -85,10 +95,18 @@ export default function DriversPage() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Bajaj and taxi drivers sign up in the <b>Visit Gondar Driver</b> app. Check their phone and
-        plate, then approve them — tourists can then ride with them.
-      </p>
+      <div className="flex flex-wrap items-start gap-3">
+        <p className="max-w-2xl text-sm text-muted-foreground">
+          For security, drivers no longer sign themselves up. A driver comes to the office with
+          their ID and vehicle documents; create their sign-in in{" "}
+          <b>Supabase Dashboard → Authentication → Users → Add user</b> (email + a password you
+          give them), then add their details here — already approved, since you just checked them
+          in person.
+        </p>
+        <Button className="ml-auto" onClick={() => setAdding(true)}>
+          <UserPlus /> Add driver
+        </Button>
+      </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {tiles.map(({ label, value, icon: Icon, tone }) => (
@@ -222,6 +240,8 @@ export default function DriversPage() {
         </div>
       )}
 
+      {adding && <AddDriverDialog onClose={() => setAdding(false)} />}
+
       <ConfirmDialog
         open={!!suspend}
         onOpenChange={(open) => !open && setSuspend(undefined)}
@@ -233,5 +253,104 @@ export default function DriversPage() {
         onConfirm={() => suspend && setStatus.mutate({ id: suspend.user_id, status: "suspended" })}
       />
     </div>
+  );
+}
+
+function AddDriverDialog({ onClose }: { onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const [email, setEmail] = React.useState("");
+  const [fullName, setFullName] = React.useState("");
+  const [phone, setPhone] = React.useState("");
+  const [vehicleType, setVehicleType] = React.useState<"bajaj" | "taxi">("bajaj");
+  const [plate, setPlate] = React.useState("");
+  const [vehicleDesc, setVehicleDesc] = React.useState("");
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  const create = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc("admin_create_driver", {
+        p_email: email.trim(),
+        p_full_name: fullName.trim(),
+        p_phone: phone.trim(),
+        p_vehicle_type: vehicleType,
+        p_plate: plate.trim(),
+        p_vehicle_desc: vehicleDesc.trim() || null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success(`${fullName.trim()} is approved and can sign in now.`);
+      void queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      onClose();
+    },
+    onError: (err) => toast.error(errorMessage(err)),
+  });
+
+  function validate(): boolean {
+    const e: Record<string, string> = {};
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) e.email = "Enter the email their sign-in was created with";
+    if (fullName.trim().length < 2) e.fullName = "Type their full name";
+    if ((phone.match(/\d/g) ?? []).length < 9) e.phone = "Type a phone number";
+    if (plate.trim() === "") e.plate = "Type the plate number";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5 text-gold" /> Add driver
+          </DialogTitle>
+          <DialogDescription>
+            First create their sign-in in Supabase Dashboard → Authentication → Users → Add user
+            (this email + a password you give them in person), then fill in their details below —
+            they're approved immediately.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <Field label="Email (their sign-in)" error={errors.email}>
+            <Input id="d-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </Field>
+          <Field label="Full name" error={errors.fullName}>
+            <Input id="d-name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+          </Field>
+          <Field label="Phone" error={errors.phone}>
+            <Input id="d-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="09… or +251…" />
+          </Field>
+          <div className="grid grid-cols-2 gap-2">
+            {(["bajaj", "taxi"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setVehicleType(t)}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-lg border-2 py-2 text-sm font-bold capitalize",
+                  vehicleType === t ? "border-primary bg-primary text-primary-foreground" : "border-border",
+                )}
+              >
+                <CarTaxiFront className="h-4 w-4" /> {t}
+              </button>
+            ))}
+          </div>
+          <Field label="Plate number" error={errors.plate}>
+            <Input id="d-plate" value={plate} onChange={(e) => setPlate(e.target.value)} placeholder="3-12345 AM" />
+          </Field>
+          <Field label="Colour and model (optional)">
+            <Input id="d-desc" value={vehicleDesc} onChange={(e) => setVehicleDesc(e.target.value)} />
+          </Field>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={create.isPending}>
+            Cancel
+          </Button>
+          <Button onClick={() => validate() && create.mutate()} disabled={create.isPending}>
+            {create.isPending ? "Adding…" : "Add driver"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

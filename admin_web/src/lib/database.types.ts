@@ -1166,6 +1166,17 @@ export interface Database {
         Args: { p_user_id: string; p_status: string };
         Returns: Database["public"]["Tables"]["drivers"]["Row"];
       };
+      admin_create_driver: {
+        Args: {
+          p_email: string;
+          p_full_name: string;
+          p_phone: string;
+          p_vehicle_type: string;
+          p_plate: string;
+          p_vehicle_desc?: string | null;
+        };
+        Returns: Database["public"]["Tables"]["drivers"]["Row"];
+      };
       admin_cancel_ride: {
         Args: { p_ride_id: string; p_reason?: string | null };
         Returns: Database["public"]["Tables"]["rides"]["Row"];
