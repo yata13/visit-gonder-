@@ -18,6 +18,9 @@ It is the full conversion of the old Flutter Web admin — same burnt-orange
 | Bookings | Money stats, approve / reject reservations, Chapa deposit status & filters |
 | Safety | Danger-zone map (click to place, severity, radius) shown to tourists |
 | Emergency | Live SOS / call / transport requests — respond, resolve, delete |
+| Rides | Live map and list of bajaj / taxi rides, cancel a ride, change the prices (ETB) |
+| Drivers | Approve or pause drivers who signed up in the **Visit Gondar Driver** app; who is online |
+| Partners | Link hotels and guides to their owner's account on the **Visit Gondar Partners** website |
 | Availability | Per-day capacity calendar for each hotel or guide |
 | Gondar Passport | Check-in points (with printable QR codes), stories, trivia |
 | Users & roles | List users, grant/revoke **admin** / **editor** roles |

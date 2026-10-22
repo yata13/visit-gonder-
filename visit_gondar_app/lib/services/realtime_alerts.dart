@@ -7,7 +7,10 @@ import '../screens/notifications/notifications_screen.dart';
 import '../screens/map/map_screen.dart';
 import '../screens/posts/feed_screen.dart';
 import '../screens/booking/my_bookings_screen.dart';
+import '../screens/emergency/emergency_screen.dart';
+import '../screens/ride/ride_screen.dart';
 import '../widgets/motion.dart';
+import 'phone_notifications.dart';
 
 /// Global navigator key — lets the alert service show banners and
 /// navigate from anywhere, over whatever screen is open.
@@ -89,16 +92,203 @@ class RealtimeAlerts {
       for (final r in rows) {
         _notify(r);
       }
+      // Newly published posts / events (visitors only ever read the
+      // published ones, so anything new here is fresh news).
+      if (_seeded) {
+        for (final (table, announce) in [
+          ('posts', _announcePost),
+          ('events', _announceEvent),
+        ]) {
+          final latest = await client
+              .from(table)
+              .select()
+              .order('created_at', ascending: false)
+              .limit(10);
+          for (final r in latest) {
+            announce(r);
+          }
+        }
+      }
     } catch (_) {} // offline — try again on the next tick
   }
+
+  // ── "Major update" announcements ────────────────────────────
+  /// Keys already announced ("post:12", "sos:5:resolved", …) so an
+  /// edit or a repeated event never pops up twice.
+  static final _announced = <String>{};
+  static bool _seeded = false;
+
+  static bool _published(Map<String, dynamic> r) {
+    final s = r['publish_status'];
+    return s == null || s == 'published';
+  }
+
+  static String? get _myId => Supabase.instance.client.auth.currentUser?.id;
+  static String? get _myEmail =>
+      Supabase.instance.client.auth.currentUser?.email;
+
+  /// Marks what is already out there, so only NEW things announce.
+  static Future<void> _seedSeen() async {
+    final db = Supabase.instance.client;
+    Future<void> seed(String table, String prefix) async {
+      try {
+        final rows = await db
+            .from(table)
+            .select('id')
+            .order('created_at', ascending: false)
+            .limit(200);
+        for (final r in rows) {
+          _announced.add('$prefix:${r['id']}');
+        }
+      } catch (_) {}
+    }
+    await Future.wait([
+      seed('posts', 'post'),
+      seed('events', 'event'),
+    ]);
+    try {
+      final zones =
+          await db.from('danger_zones').select('id').eq('is_active', true);
+      for (final z in zones) {
+        _announced.add('zone:${z['id']}');
+      }
+    } catch (_) {}
+    _seeded = true;
+  }
+
+  static void _announcePost(Map<String, dynamic> p) {
+    if (!_seeded || p['id'] == null || !_published(p)) return;
+    if (!_announced.add('post:${p['id']}')) return;
+    _show(
+      title: '📰 ${p['title'] ?? 'New from Visit Gondar'}',
+      message: (p['body'] ?? '') as String,
+      urgent: false,
+      onTap: () => _open(const FeedScreen()),
+    );
+  }
+
+  static void _announceEvent(Map<String, dynamic> e) {
+    if (!_seeded || e['id'] == null || !_published(e)) return;
+    if (!_announced.add('event:${e['id']}')) return;
+    _show(
+      title: '🎉 New event · ${e['name'] ?? e['title'] ?? 'Gondar'}',
+      message: (e['description'] ?? e['date'] ?? '') as String,
+      urgent: false,
+      onTap: () => _open(const NotificationsScreen()),
+    );
+  }
+
+  static void _announceZone(Map<String, dynamic> z) {
+    if (z['id'] == null) return;
+    final key = 'zone:${z['id']}';
+    if (z['is_active'] == false) {
+      _announced.remove(key); // announce again if it is re-activated
+      return;
+    }
+    if (!_seeded || !_announced.add(key)) return;
+    _show(
+      title: '⚠ Safety alert · ${z['name'] ?? 'Gondar'}',
+      message: (z['description'] ??
+          'An area in Gondar is currently unsafe. Open the map.') as String,
+      urgent: true,
+      onTap: () => _open(const MapScreen()),
+    );
+  }
+
+  static void _announceEmergency(Map<String, dynamic> r) {
+    final me = _myId;
+    if (me == null || r['user_id'] != me) return;
+    final status = (r['status'] ?? '') as String;
+    if (!_announced.add('sos:${r['id']}:$status')) return;
+    final (title, msg) = switch (status) {
+      'responding' => ('🚑 Help is on the way',
+          'The Safety Desk is responding to your request. Stay where you are if you can.'),
+      'resolved' => ('✅ Your request is resolved',
+          'The Safety Desk marked your request as resolved. Stay safe in Gondar!'),
+      _ => ('🆘 Update on your request', 'Status: $status'),
+    };
+    _show(
+      title: title,
+      message: msg,
+      urgent: status != 'resolved',
+      onTap: () => _open(const EmergencyScreen()),
+    );
+  }
+
+  static void _announceBooking(Map<String, dynamic> b) {
+    final me = _myId, email = _myEmail;
+    final mine = (me != null && b['user_id'] == me) ||
+        (email != null && b['user_email'] == email);
+    if (!mine) return;
+    final status = (b['status'] ?? 'pending') as String;
+    if (!_announced.add('booking:${b['id']}:$status')) return;
+    final item = b['item_name'] ?? 'your booking';
+    final (String title, String msg)? text = switch (status) {
+      'pending' => ('📅 Booking received',
+          'We sent your request for $item. You will be told when it is confirmed.'),
+      'confirmed' || 'approved' => ('✅ Booking confirmed',
+          'Your booking at $item is confirmed. Pay on arrival.'),
+      'cancelled' || 'rejected' => ('❌ Booking cancelled',
+          'Your booking at $item was cancelled. Tap to rebook.'),
+      _ => null,
+    };
+    if (text == null) return;
+    _show(
+      title: text.$1,
+      message: text.$2,
+      urgent: false,
+      onTap: () => _open(const MyBookingsScreen()),
+    );
+  }
+
+  static void _announceRide(Map<String, dynamic> r) {
+    final me = _myId;
+    if (me == null || r['rider_id'] != me) return;
+    final id = '${r['id']}', status = (r['status'] ?? '') as String;
+    final wasAccepted = _announced.contains('ride:$id:accepted');
+    if (!_announced.add('ride:$id:$status:${r['driver_id']}')) return;
+    final plate = r['vehicle_plate'] ?? '';
+    final (String, String)? text = switch (status) {
+      'accepted' => (
+          '🛺 ${r['driver_name'] ?? 'Your driver'} is on the way',
+          'Plate $plate. Be ready at ${r['pickup_label'] ?? 'your pickup point'}.'),
+      'arrived' => ('📍 Your driver is here', 'Look for plate $plate.'),
+      'completed' => ('✅ You have arrived',
+          'Pay ${(r['fare_estimate'] as num?)?.round() ?? ''} ETB in cash, then rate your driver.'),
+      'requested' when wasAccepted => ('🔄 Finding you another driver',
+          'Your driver could not come. Your request is open again.'),
+      'cancelled' when r['cancelled_by'] == 'admin' =>
+          ('Ride cancelled', 'The Visit Gondar team cancelled this ride.'),
+      'expired' => ('No driver free right now',
+          'Nobody could take your ride in 15 minutes. Open Ride to try again.'),
+      _ => null,
+    };
+    if (status == 'accepted') _announced.add('ride:$id:accepted');
+    if (status == 'requested') _announced.remove('ride:$id:accepted');
+    if (text == null) return;
+    _show(
+      title: text.$1,
+      message: text.$2,
+      urgent: false,
+      onTap: () => _open(const RideScreen()),
+    );
+  }
+
+  /// Called by the booking screen right after a booking is saved, so
+  /// the phone shows it even before the live event arrives.
+  static void bookingCreated(Map<String, dynamic> booking) =>
+      _announceBooking({...booking, 'user_id': _myId, 'user_email': _myEmail});
 
   static void start() {
     if (_started) return;
     _started = true;
 
+    PhoneNotifications.onOpen = () => _open(const NotificationsScreen());
+
     _checkNew();
     _poll = Timer.periodic(const Duration(seconds: 15), (_) => _checkNew());
 
+    _seedSeen();
     var channel = Supabase.instance.client
         .channel('public:alerts')
         .onPostgresChanges(
@@ -107,61 +297,45 @@ class RealtimeAlerts {
           table: 'notifications',
           callback: (payload) => _notify(payload.newRecord),
         )
+        // News Feed + events: drafts are saved first and PUBLISHED
+        // later (an update), so watch both and announce each once.
         .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
+          event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'posts',
-          callback: (payload) {
-            final p = payload.newRecord;
-            _show(
-              title: '📰 ${p['title'] ?? 'New from Visit Gondar'}',
-              message: (p['body'] ?? '') as String,
-              urgent: false,
-              onTap: () => _open(const FeedScreen()),
-            );
-          },
+          callback: (payload) => _announcePost(payload.newRecord),
         )
         .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'events',
+          callback: (payload) => _announceEvent(payload.newRecord),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'danger_zones',
-          callback: (payload) {
-            final z = payload.newRecord;
-            if (z['is_active'] == false) return;
-            _show(
-              title: '⚠ Safety alert · ${z['name'] ?? 'Gondar'}',
-              message: (z['description'] ??
-                  'An area in Gondar is currently unsafe. Open the map.') as String,
-              urgent: true,
-              onTap: () => _open(const MapScreen()),
-            );
-          },
+          callback: (payload) => _announceZone(payload.newRecord),
         )
+        // The visitor's own SOS / help requests: the city responding.
         .onPostgresChanges(
           event: PostgresChangeEvent.update,
           schema: 'public',
+          table: 'emergency_requests',
+          callback: (payload) => _announceEmergency(payload.newRecord),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
           table: 'bookings',
-          callback: (payload) {
-            final b = payload.newRecord;
-            // Only tell THIS user about THEIR booking.
-            final myEmail =
-                Supabase.instance.client.auth.currentUser?.email;
-            if (myEmail == null || b['user_email'] != myEmail) return;
-            final status = (b['status'] ?? '') as String;
-            final confirmed = status == 'confirmed' || status == 'approved';
-            final cancelled = status == 'cancelled' || status == 'rejected';
-            if (!confirmed && !cancelled) return;
-            _show(
-              title: confirmed
-                  ? '✅ Booking confirmed'
-                  : '❌ Booking cancelled',
-              message: confirmed
-                  ? 'Your booking at ${b['item_name']} is confirmed. Pay on arrival.'
-                  : 'Your booking at ${b['item_name']} was cancelled. Tap to rebook.',
-              urgent: false,
-              onTap: () => _open(const MyBookingsScreen()),
-            );
-          },
+          callback: (payload) => _announceBooking(payload.newRecord),
+        )
+        // The visitor's own ride: driver found, arrived, trip done.
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'rides',
+          callback: (payload) => _announceRide(payload.newRecord),
         );
     for (final t in _liveTables) {
       channel = channel.onPostgresChanges(
@@ -208,11 +382,17 @@ class RealtimeAlerts {
     required bool urgent,
     required VoidCallback onTap,
   }) {
+    // Status bar / lock screen too — seen even when the app is in the
+    // background or the phone is locked.
+    PhoneNotifications.show(
+        title: title, body: message, urgent: urgent);
+
     final overlay = rootNavigatorKey.currentState?.overlay;
     if (overlay == null) return;
 
     _dismiss();
-    _sound(urgent);
+    // The phone notification already rings; chime only without it.
+    if (!PhoneNotifications.active) _sound(urgent);
 
     _entry = OverlayEntry(
       builder: (_) => _AlertBanner(

@@ -72,7 +72,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     onTap: () => ref.read(languageProvider.notifier).toggle(),
                   ),
                 ])),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+                // Equal flexible space above the photo and below the
+                // tagline keeps the photo centred between header and buttons.
+                const Spacer(),
 
                 // ── Cover image ──
                 Reveal(
@@ -81,7 +84,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   scale: 0.94,
                   duration: const Duration(milliseconds: 700),
                   child: SizedBox(
-                  height: MediaQuery.sizeOf(context).height * 0.34,
+                  height: MediaQuery.sizeOf(context).height * 0.38,
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(AppRadius.hero),
@@ -147,6 +150,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           color: AppColors.ink700)),
                 ),
                 const Spacer(),
+                const SizedBox(height: 16),
 
                 ...Reveal.stagger(start: const Duration(milliseconds: 680),
                     stepMs: 80, [

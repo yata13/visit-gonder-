@@ -6,6 +6,7 @@ import '../../theme/app_theme.dart';
 import '../../services/booking_service.dart';
 import 'my_bookings_screen.dart';
 import '../../widgets/motion.dart';
+import '../../services/realtime_alerts.dart';
 
 class BookingScreen extends StatefulWidget {
   final String type;           // 'hotel' | 'guide'
@@ -128,6 +129,10 @@ class _BookingScreenState extends State<BookingScreen> {
         checkOut:        _checkOut,
         guests:          _guests,
       );
+
+      // Phone notification: "Booking received" (status bar too).
+      RealtimeAlerts.bookingCreated(
+          {'item_name': widget.referenceName, ...booking});
 
       if (!mounted) return;
       Navigator.pushReplacement(context, SmoothPageRoute(

@@ -6,6 +6,8 @@ import '../../providers/language_provider.dart';
 import '../../providers/tier_provider.dart';
 import '../../widgets/shimmer_image.dart';
 import '../../widgets/ui.dart';
+import '../../widgets/panorama_360.dart';
+import '../../core/constants/app_constants.dart';
 import '../ai/ask_gondar_screen.dart';
 import '../premium/premium_screen.dart';
 
@@ -24,6 +26,15 @@ class _Stop {
   const _Stop(this.titleEn, this.titleAm, this.bodyEn, this.bodyAm,
       this.keywords, this.icon);
 }
+
+/// 360° picture of the compound — set in AppConstants.tourPanorama
+/// (a painted demo until a real 360° photo of Fasil Ghebbi is added).
+const _panorama = AppConstants.tourPanorama;
+
+/// Where to face first for each stop (0..1 of the way round the
+/// picture). With the castle-ruin photo every stop opens on its
+/// great arch, then turns a little so each stop feels different.
+const _panoramaHeadings = [0.5, 0.42, 0.58, 0.35, 0.65, 0.28, 0.5];
 
 const _stops = [
   _Stop(
@@ -270,6 +281,41 @@ class _TourState extends ConsumerState<_Tour> {
                           ),
                         ),
                       )),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: PressScale(
+                  onTap: () => pushScreen(
+                    context,
+                    Panorama360Screen(
+                      asset: _panorama,
+                      am: am,
+                      title: am ? _stops[_page].titleAm : _stops[_page].titleEn,
+                      initialHeading: _panoramaHeadings[
+                          _page % _panoramaHeadings.length],
+                    ),
+                  ),
+                  child: Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.brandGold,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [BoxShadow(
+                          color: Color(0x55000000), blurRadius: 12)],
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.threesixty_rounded,
+                          size: 20, color: AppColors.black),
+                      const SizedBox(width: 6),
+                      Text(am ? 'በ360° ይመልከቱ' : 'Look around in 360°',
+                          style: const TextStyle(fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.black)),
+                    ]),
+                  ),
                 ),
               ),
             ]),

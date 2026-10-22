@@ -12,6 +12,9 @@ import UsersPage from "@/features/users/UsersPage";
 import NotificationsPage from "@/features/notifications/NotificationsPage";
 import SafetyPage from "@/features/safety/SafetyPage";
 import EmergencyPage from "@/features/emergency/EmergencyPage";
+import DriversPage from "@/features/drivers/DriversPage";
+import RidesPage from "@/features/rides/RidesPage";
+import PartnersPage from "@/features/partners/PartnersPage";
 import { Button } from "@/components/ui/button";
 import { LiveProvider } from "@/features/live/LiveProvider";
 
@@ -54,6 +57,9 @@ const router = createBrowserRouter([
       { path: "notifications", element: <NotificationsPage /> },
       { path: "safety", element: <SafetyPage /> },
       { path: "emergency", element: <EmergencyPage /> },
+      { path: "rides", element: <RidesPage /> },
+      { path: "drivers", element: <DriversPage /> },
+      { path: "partners", element: <PartnersPage /> },
       { path: "availability", element: <AvailabilityPage /> },
       { path: "passport", element: <PassportPage /> },
       {

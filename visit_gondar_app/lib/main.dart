@@ -14,7 +14,9 @@ import 'core/constants/app_constants.dart';
 import 'theme/app_theme.dart';
 import 'services/supabase_service.dart';
 import 'services/realtime_alerts.dart';
+import 'services/phone_notifications.dart';
 import 'providers/language_provider.dart';
+import 'providers/passport_provider.dart';
 import 'widgets/ui.dart';
 import 'screens/onboarding/intro_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
@@ -39,6 +41,8 @@ Future<void> main() async {
     RealtimeAlerts.start(); // live popups on every screen
   } catch (_) {}
   runApp(const ProviderScope(child: VisitGondarApp()));
+  // After the first frame, so the permission prompt sits over the app.
+  WidgetsBinding.instance.addPostFrameCallback((_) => PhoneNotifications.init());
 }
 
 class VisitGondarApp extends StatelessWidget {
@@ -201,10 +205,16 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
   final _visited = <int>{};
 
   static const _askTab = 3;
+  static const _passportTab = 2;
 
   void select(int i) {
     if (i == _index) return;
     HapticFeedback.selectionClick();
+    if (i == _passportTab) {
+      // Fresh sites + stamps every time the Passport opens.
+      ref.invalidate(passportCheckpointsProvider);
+      ref.invalidate(myCheckinsProvider);
+    }
     setState(() => _index = i);
   }
 

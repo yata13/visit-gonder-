@@ -5,7 +5,9 @@ import {
   BotMessageSquare,
   Building2,
   CalendarRange,
+  CarTaxiFront,
   CircleUserRound,
+  Handshake,
   Hotel,
   Landmark,
   LayoutDashboard,
@@ -15,6 +17,7 @@ import {
   Newspaper,
   PartyPopper,
   ReceiptText,
+  Route,
   Shield,
   Siren,
   Stamp,
@@ -39,6 +42,9 @@ const NAV = [
   { to: "/listings/ai_knowledge", label: "AI Knowledge", icon: BotMessageSquare },
   { to: "/listings/places", label: "Map Manager", icon: MapPin },
   { to: "/bookings", label: "Bookings", icon: ReceiptText },
+  { to: "/rides", label: "Rides", icon: Route },
+  { to: "/drivers", label: "Drivers", icon: CarTaxiFront },
+  { to: "/partners", label: "Partners", icon: Handshake },
   { to: "/safety", label: "Safety", icon: Shield },
   { to: "/emergency", label: "Emergency", icon: Siren },
   { to: "/availability", label: "Availability", icon: CalendarRange },
@@ -189,7 +195,8 @@ export default function AppShell() {
         </header>
 
         <main className="min-w-0 flex-1 p-4 md:p-6">
-          <div className="mx-auto w-full max-w-6xl">
+          {/* The dashboard is a wall of charts — let it use the full width. */}
+          <div className={cn("mx-auto w-full", location.pathname === "/" ? "max-w-none" : "max-w-6xl")}>
             <Outlet />
           </div>
         </main>

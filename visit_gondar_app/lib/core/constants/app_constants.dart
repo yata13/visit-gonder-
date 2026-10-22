@@ -50,4 +50,34 @@ class AppConstants {
       'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80';
   static const introImage3 =
       'https://i.postimg.cc/9XD3Zhsw/39926cec947327694bdfd2e58ec1bcae.webp';
+
+  //  👉 tourPanorama = the 360° picture in the Fasil Ghebbi virtual
+  //     tour. A full-circle panorama (about 4× wider than tall, or an
+  //     equirectangular 2:1 photo). Paste a web URL of a real 360°
+  //     photo here, or replace the local demo file.
+  //  👉 mapTiles = where the map pictures come from (OpenStreetMap,
+  //     free, no key). Change here to use another map style.
+  static String mapTiles = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+  static const tourPanorama = 'assets/tour/castle_ruin_360.jpg';
+  // Painted demo of the Gondar compound, if you prefer it:
+  //   'assets/tour/gondar_castle_360.jpg'
+
+  // ═══════════════════════════════════════════════════════════════
+  //  DEMO MODE — for testing and presentations.
+  //  true  → every visitor gets Premium (Ask AI, virtual tour), the
+  //          AI answers with a friendly "coming soon" when it is not
+  //          live yet, and the Passport check-in shows the demo codes.
+  //  ⚠ Set to false before publishing the app.
+  // ═══════════════════════════════════════════════════════════════
+  static const demoMode = true;
+
+  /// Codes made by supabase/demo/DEMO_PASSPORT.sql.
+  static const demoPassportCodes = [
+    ('Fasil Ghebbi', 'FASIL1'),
+    ("Fasilides' Bath", 'BATH2'),
+    ('Debre Berhan Selassie', 'DEBRE3'),
+    ('Kuskuam', 'KUSKUAM4'),
+    ('Ras Gimb', 'RASGIMB5'),
+  ];
 }

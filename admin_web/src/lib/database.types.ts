@@ -423,6 +423,234 @@ export interface Database {
         };
         Relationships: [];
       };
+      ride_fares: {
+        Row: {
+          vehicle_type: string;
+          base_fare: number;
+          per_km: number;
+          minimum: number;
+          updated_at: string;
+        };
+        Insert: {
+          vehicle_type: string;
+          base_fare: number;
+          per_km: number;
+          minimum: number;
+          updated_at?: string;
+        };
+        Update: {
+          vehicle_type?: string;
+          base_fare?: number;
+          per_km?: number;
+          minimum?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      drivers: {
+        Row: {
+          user_id: string;
+          full_name: string;
+          phone: string;
+          vehicle_type: string;
+          plate: string;
+          vehicle_desc: string | null;
+          photo: string | null;
+          status: string;
+          is_online: boolean;
+          lat: number | null;
+          lng: number | null;
+          location_at: string | null;
+          rating_sum: number;
+          rating_count: number;
+          rides_completed: number;
+          created_at: string;
+          approved_at: string | null;
+        };
+        Insert: {
+          user_id: string;
+          full_name: string;
+          phone: string;
+          vehicle_type: string;
+          plate: string;
+          vehicle_desc?: string | null;
+          photo?: string | null;
+          status?: string;
+          is_online?: boolean;
+          lat?: number | null;
+          lng?: number | null;
+          location_at?: string | null;
+          rating_sum?: number;
+          rating_count?: number;
+          rides_completed?: number;
+          created_at?: string;
+          approved_at?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          full_name?: string;
+          phone?: string;
+          vehicle_type?: string;
+          plate?: string;
+          vehicle_desc?: string | null;
+          photo?: string | null;
+          status?: string;
+          is_online?: boolean;
+          lat?: number | null;
+          lng?: number | null;
+          location_at?: string | null;
+          rating_sum?: number;
+          rating_count?: number;
+          rides_completed?: number;
+          created_at?: string;
+          approved_at?: string | null;
+        };
+        Relationships: [];
+      };
+      rides: {
+        Row: {
+          id: string;
+          rider_id: string;
+          rider_name: string | null;
+          rider_phone: string | null;
+          vehicle_type: string;
+          pickup_lat: number;
+          pickup_lng: number;
+          pickup_label: string | null;
+          dropoff_lat: number;
+          dropoff_lng: number;
+          dropoff_label: string | null;
+          distance_km: number;
+          fare_estimate: number;
+          status: string;
+          driver_id: string | null;
+          driver_name: string | null;
+          driver_phone: string | null;
+          vehicle_plate: string | null;
+          vehicle_desc: string | null;
+          driver_lat: number | null;
+          driver_lng: number | null;
+          driver_location_at: string | null;
+          rider_rating: number | null;
+          cancelled_by: string | null;
+          cancel_reason: string | null;
+          created_at: string;
+          accepted_at: string | null;
+          arrived_at: string | null;
+          started_at: string | null;
+          completed_at: string | null;
+          cancelled_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          rider_id: string;
+          rider_name?: string | null;
+          rider_phone?: string | null;
+          vehicle_type: string;
+          pickup_lat: number;
+          pickup_lng: number;
+          pickup_label?: string | null;
+          dropoff_lat: number;
+          dropoff_lng: number;
+          dropoff_label?: string | null;
+          distance_km: number;
+          fare_estimate: number;
+          status?: string;
+          driver_id?: string | null;
+          driver_name?: string | null;
+          driver_phone?: string | null;
+          vehicle_plate?: string | null;
+          vehicle_desc?: string | null;
+          driver_lat?: number | null;
+          driver_lng?: number | null;
+          driver_location_at?: string | null;
+          rider_rating?: number | null;
+          cancelled_by?: string | null;
+          cancel_reason?: string | null;
+          created_at?: string;
+          accepted_at?: string | null;
+          arrived_at?: string | null;
+          started_at?: string | null;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          rider_id?: string;
+          rider_name?: string | null;
+          rider_phone?: string | null;
+          vehicle_type?: string;
+          pickup_lat?: number;
+          pickup_lng?: number;
+          pickup_label?: string | null;
+          dropoff_lat?: number;
+          dropoff_lng?: number;
+          dropoff_label?: string | null;
+          distance_km?: number;
+          fare_estimate?: number;
+          status?: string;
+          driver_id?: string | null;
+          driver_name?: string | null;
+          driver_phone?: string | null;
+          vehicle_plate?: string | null;
+          vehicle_desc?: string | null;
+          driver_lat?: number | null;
+          driver_lng?: number | null;
+          driver_location_at?: string | null;
+          rider_rating?: number | null;
+          cancelled_by?: string | null;
+          cancel_reason?: string | null;
+          created_at?: string;
+          accepted_at?: string | null;
+          arrived_at?: string | null;
+          started_at?: string | null;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+        };
+        Relationships: [];
+      };
+      partner_requests: {
+        Row: {
+          id: string;
+          user_id: string;
+          email: string | null;
+          business_type: string;
+          business_name: string;
+          phone: string | null;
+          message: string | null;
+          status: string;
+          created_at: string;
+          handled_at: string | null;
+          handled_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string;
+          email?: string | null;
+          business_type: string;
+          business_name: string;
+          phone?: string | null;
+          message?: string | null;
+          status?: string;
+          created_at?: string;
+          handled_at?: string | null;
+          handled_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          email?: string | null;
+          business_type?: string;
+          business_name?: string;
+          phone?: string | null;
+          message?: string | null;
+          status?: string;
+          created_at?: string;
+          handled_at?: string | null;
+          handled_by?: string | null;
+        };
+        Relationships: [];
+      };
       user_tiers: {
         Row: {
           user_id: string;
@@ -924,6 +1152,62 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      ride_quote: {
+        Args: {
+          p_vehicle_type: string;
+          p_pickup_lat: number;
+          p_pickup_lng: number;
+          p_dropoff_lat: number;
+          p_dropoff_lng: number;
+        };
+        Returns: { distance_km: number; fare: number }[];
+      };
+      admin_set_driver_status: {
+        Args: { p_user_id: string; p_status: string };
+        Returns: Database["public"]["Tables"]["drivers"]["Row"];
+      };
+      admin_cancel_ride: {
+        Args: { p_ride_id: string; p_reason?: string | null };
+        Returns: Database["public"]["Tables"]["rides"]["Row"];
+      };
+      owns_business: {
+        Args: { p_type: string; p_id: string };
+        Returns: boolean;
+      };
+      partner_set_booking_status: {
+        Args: { p_booking_id: string; p_status: string };
+        Returns: Database["public"]["Tables"]["bookings"]["Row"];
+      };
+      partner_update_hotel: {
+        Args: {
+          p_hotel_id: string;
+          p_description: string | null;
+          p_contact: string | null;
+          p_location: string | null;
+          p_price: number;
+          p_photos: string[] | null;
+        };
+        Returns: Database["public"]["Tables"]["hotels"]["Row"];
+      };
+      partner_update_guide: {
+        Args: {
+          p_guide_id: string;
+          p_specialty: string | null;
+          p_contact: string | null;
+          p_price: number;
+          p_languages: string[] | null;
+          p_photo: string | null;
+        };
+        Returns: Database["public"]["Tables"]["guides"]["Row"];
+      };
+      admin_link_owner: {
+        Args: { p_type: string; p_business_id: string; p_email: string };
+        Returns: string;
+      };
+      admin_unlink_owner: {
+        Args: { p_type: string; p_business_id: string };
+        Returns: undefined;
+      };
       is_admin: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;

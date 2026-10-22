@@ -10,6 +10,9 @@ import '../../providers/data_providers.dart';
 import '../../providers/language_provider.dart';
 import '../emergency/emergency_screen.dart';
 import '../../widgets/motion.dart';
+import '../ride/ride_screen.dart';
+import '../../services/ride_service.dart';
+import '../../core/constants/app_constants.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  MAP — every pin comes from the live database (hotels + sites
@@ -150,7 +153,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           children: [
             // OpenStreetMap tiles — free, no API key (CARTO now needs one).
             TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate: AppConstants.mapTiles,
               userAgentPackageName: 'com.visitgondar.app',
               maxNativeZoom: 19,
             ),
@@ -505,15 +508,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
                   Row(children: [
                     Expanded(
+                      flex: 2,
                       child: OutlinedButton.icon(
-                        onPressed: () =>
-                            setState(() => _selectedPlace = null),
-                        icon: const Icon(Icons.close, size: 16),
-                        label: const Text('Close'),
+                        // Ride there with a partner bajaj / taxi.
+                        onPressed: () => pushScreen(
+                            context,
+                            RideScreen(
+                                destination: RidePlace(_selectedPlace!.name,
+                                    _selectedPlace!.position))),
+                        icon: const Icon(Icons.electric_rickshaw_rounded,
+                            size: 16),
+                        label: const Text('Ride there',
+                            style: TextStyle(fontWeight: FontWeight.w700)),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textMuted,
+                          foregroundColor: AppColors.brandBrown,
                           side: const BorderSide(
-                              color: AppColors.surfaceVariant),
+                              color: AppColors.brandBrown, width: 1.5),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         ),
@@ -526,7 +536,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         onPressed: () =>
                             _openDirections(_selectedPlace!),
                         icon: const Icon(Icons.directions, size: 16),
-                        label: const Text('Get Directions',
+                        label: const Text('Directions',
                             style: TextStyle(fontWeight: FontWeight.w700)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.darkBrown,

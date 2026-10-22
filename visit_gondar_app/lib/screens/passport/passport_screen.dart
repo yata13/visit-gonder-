@@ -13,6 +13,8 @@ import '../../widgets/ui.dart';
 import '../auth/login_screen.dart';
 import '../timket/timket_roadmap.dart';
 import '../../widgets/motion.dart';
+import '../../core/constants/app_constants.dart';
+import 'passport_scan_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  GONDAR PASSPORT (tab 3) — design "Passport · home".
@@ -508,14 +510,28 @@ class _Badges extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  CHECK-IN — type the code printed under the QR sign at a site.
+//  CHECK-IN — scan the QR on the site's Passport sign (or type the
+//  code printed under it). The sheet closes with the result; this
+//  page then refreshes the stamps and shows the stamp dialog.
 // ═══════════════════════════════════════════════════════════════
-Future<void> showCheckInSheet(BuildContext context) {
-  return showModalBottomSheet(
+Future<void> showCheckInSheet(BuildContext context) async {
+  final container = ProviderScope.containerOf(context);
+  final res = await showModalBottomSheet<CheckInResult>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     builder: (_) => const _CheckInSheet(),
+  );
+  if (res == null) return;
+  // Refresh both the list of sites and the visitor's stamps, so the
+  // count and the grid are right even if a site was added meanwhile.
+  container.invalidate(passportCheckpointsProvider);
+  container.invalidate(myCheckinsProvider);
+  if (!context.mounted) return;
+  await showDialog(
+    context: context,
+    builder: (_) => _StampEarnedDialog(
+        result: res, am: isAm(container.read(languageProvider))),
   );
 }
 
@@ -544,13 +560,7 @@ class _CheckInSheetState extends ConsumerState<_CheckInSheet> {
     });
     try {
       final res = await passportCheckIn(_code.text);
-      ref.invalidate(myCheckinsProvider);
-      if (!mounted) return;
-      Navigator.pop(context);
-      await showDialog(
-        context: context,
-        builder: (_) => _StampEarnedDialog(result: res, am: am),
-      );
+      if (mounted) Navigator.pop(context, res);
     } on PostgrestException catch (e) {
       setState(() => _error = e.code == 'P0002'
           ? (am ? 'ኮዱ ትክክል አይደለም። እንደገና ይሞክሩ።'
@@ -587,6 +597,27 @@ class _CheckInSheetState extends ConsumerState<_CheckInSheet> {
         Text(am ? 'በቦታው ማህተም ይውሰዱ' : 'Check in at a site',
             style: const TextStyle(fontSize: 24,
                 fontWeight: FontWeight.w800)),
+        const SizedBox(height: 16),
+        FilledButton.icon(
+          onPressed: _busy ? null : () async {
+            final res = await Navigator.push<CheckInResult>(context,
+                SmoothPageRoute(builder: (_) => const PassportScanScreen()));
+            if (res != null && context.mounted) Navigator.pop(context, res);
+          },
+          icon: const Icon(Icons.qr_code_scanner_rounded),
+          label: Text(am ? 'QR ኮዱን ይቃኙ' : 'Scan the QR code'),
+        ),
+        const SizedBox(height: 18),
+        Row(children: [
+          const Expanded(child: Divider()),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text(am ? 'ወይም ኮዱን ይጻፉ' : 'or type the code',
+                style: const TextStyle(fontSize: 13,
+                    fontWeight: FontWeight.w700, color: AppColors.muted)),
+          ),
+          const Expanded(child: Divider()),
+        ]),
         const SizedBox(height: 6),
         Text(
             am
@@ -608,6 +639,25 @@ class _CheckInSheetState extends ConsumerState<_CheckInSheet> {
             prefixIcon: const Icon(Icons.qr_code_2_rounded),
           ),
         ),
+        // Demo: tap a code instead of visiting the site.
+        if (AppConstants.demoMode) ...[
+          const SizedBox(height: 12),
+          Text(am ? 'የሙከራ ኮዶች — አንዱን ይንኩ' : 'Demo codes — tap one to try',
+              style: const TextStyle(fontSize: 13,
+                  fontWeight: FontWeight.w700, color: AppColors.muted)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final (name, code) in AppConstants.demoPassportCodes)
+              ActionChip(
+                avatar: const Icon(Icons.qr_code_2_rounded, size: 16),
+                label: Text('$code · $name'),
+                onPressed: () => setState(() {
+                  _code.text = code;
+                  _error = null;
+                }),
+              ),
+          ]),
+        ],
         if (_error != null) ...[
           const SizedBox(height: 12),
           Container(

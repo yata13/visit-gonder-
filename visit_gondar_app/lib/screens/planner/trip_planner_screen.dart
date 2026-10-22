@@ -672,7 +672,7 @@ class _PlanResult extends ConsumerWidget {
                 '${am ? '/ቀን' : '/day'} · ${(guide['specialty'] ?? '') as String}',
             icon: Icons.person_pin,
             onTap: () => Navigator.push(context, SmoothPageRoute(
-                builder: (_) => GuideProfileScreen(guide: guide!))),
+                builder: (_) => GuideProfileScreen(guide: guide))),
           ),
         ],
 
