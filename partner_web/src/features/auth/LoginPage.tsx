@@ -63,7 +63,7 @@ export default function LoginPage() {
           className="absolute inset-0 opacity-[0.07]"
           style={{
             backgroundImage:
-              "repeating-linear-gradient(45deg, #D5A562 0 2px, transparent 2px 22px), repeating-linear-gradient(-45deg, #D5A562 0 2px, transparent 2px 22px)",
+              "repeating-linear-gradient(45deg, #B7E3BE 0 2px, transparent 2px 22px), repeating-linear-gradient(-45deg, #B7E3BE 0 2px, transparent 2px 22px)",
           }}
         />
         <div className="relative flex items-center gap-3">

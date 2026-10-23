@@ -349,7 +349,7 @@ class _GlassTabBar extends StatelessWidget {
                 height: 56,
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xE62A1A0F), // deep brown, 90%
+                  color: const Color(0xE616281C), // deep green, 90%
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(
                       color: Colors.white.withValues(alpha: 0.1)),

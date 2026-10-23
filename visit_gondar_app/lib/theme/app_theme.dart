@@ -4,12 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/motion.dart';
 
 // ═══════════════════════════════════════════════════════════════
-//  DESIGN SYSTEM v0.6 — "Gondar gold"
-//  Brand palette: gold #D5A562 · cream #EEEBE9 · brown #7C4928.
-//  Brown carries text and main buttons on cream; gold marks the
-//  active / highlighted thing. Other colour is MEANING only:
+//  DESIGN SYSTEM v0.7 — "Gondar green"
+//  Brand palette: green #2E7D4F · white/cream #F3F7F1 · light
+//  green #B7E3BE. Green carries text and main buttons on white;
+//  light green marks the active / highlighted thing. Other colour
+//  is MEANING only:
 //   • SOS red     — SOS and danger, never errors or decoration
-//   • Safe green  — Safety Desk and "I'm safe" only
+//   • Safe green  — Safety Desk and "I'm safe" only (deeper, more
+//                   saturated than the brand green, kept distinct)
 //   • Amber       — pending / in review / warning zone
 //   • Blue        — confirmed / published / info
 //   • Verified    — the blue tick on approved partners
@@ -17,27 +19,27 @@ import '../widgets/motion.dart';
 // ═══════════════════════════════════════════════════════════════
 class AppColors {
   // ── Brand ─────────────────────────────────────────────
-  static const brandGold  = Color(0xFFD5A562); // highlights, active pill
-  static const brandCream = Color(0xFFEEEBE9); // app background
-  static const brandBrown = Color(0xFF7C4928); // main buttons, icons
-  static const goldTint   = Color(0xFFF6EBDA); // soft gold wash
+  static const brandGold  = Color(0xFFB7E3BE); // highlights, active pill (light green)
+  static const brandCream = Color(0xFFF3F7F1); // app background (soft white)
+  static const brandBrown = Color(0xFF2E7D4F); // main buttons, icons (brand green)
+  static const goldTint   = Color(0xFFE3F1E6); // soft green wash
 
-  // ── Neutrals (warm, built from the brand) ─────────────
+  // ── Neutrals (cool, built from the brand) ─────────────
   static const ink      = brandBrown;        // icons, main buttons
-  static const black    = Color(0xFF2E1E14); // headings, kicker text
-  static const ink700   = Color(0xFF3A2516); // body text, dark cards
-  static const muted    = Color(0xFF6B5B4F); // captions, meta
-  static const line     = Color(0xFFD9CEC3); // borders, dividers
-  static const stone    = Color(0xFFE2D9D0); // photo placeholders, wells
-  static const gray100  = Color(0xFFE5E0DC); // soft highlight, selected row
+  static const black    = Color(0xFF17241B); // headings, kicker text
+  static const ink700   = Color(0xFF1F3326); // body text, dark cards
+  static const muted    = Color(0xFF5C6E60); // captions, meta
+  static const line     = Color(0xFFD3E0D6); // borders, dividers
+  static const stone    = Color(0xFFDCE8DF); // photo placeholders, wells
+  static const gray100  = Color(0xFFE0ECE2); // soft highlight, selected row
   static const ground   = brandCream;        // app background
   static const surface  = Color(0xFFFFFFFF); // cards, sheets
   static const onDark   = Color(0xFFFFFFFF);
-  static const onDarkMuted = Color(0xFFD9CEC3);
+  static const onDarkMuted = Color(0xFFD3E0D6);
 
-  // Night — headers, hero cards, dark tiles (deep brown)
-  static const night1 = Color(0xFF2A1A0F);
-  static const night2 = Color(0xFF5C3A22);
+  // Night — headers, hero cards, dark tiles (deep green)
+  static const night1 = Color(0xFF16281C);
+  static const night2 = Color(0xFF2F6B46);
   static const night3 = brandBrown;
 
   // ── Meaning — fixed, never decoration ─────────────────
@@ -324,9 +326,9 @@ class _Glow extends StatelessWidget {
           ),
         );
     return Stack(children: [
-      blob(const Alignment(1.2, -1.1), const Color(0x66D5A562)),
-      blob(const Alignment(-1.2, -0.05), const Color(0xFFE2D9D0)),
-      blob(const Alignment(1.2, 0.75), const Color(0x4DD5A562)),
+      blob(const Alignment(1.2, -1.1), const Color(0x66B7E3BE)),
+      blob(const Alignment(-1.2, -0.05), const Color(0xFFDCE8DF)),
+      blob(const Alignment(1.2, 0.75), const Color(0x4DB7E3BE)),
     ]);
   }
 }
