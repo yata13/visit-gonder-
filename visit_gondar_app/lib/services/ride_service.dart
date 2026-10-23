@@ -124,3 +124,36 @@ double kmBetween(LatLng a, LatLng b) =>
 
 /// Rough city ETA: bajaj/taxi average ~18 km/h in Gondar traffic.
 int etaMinutes(double km) => math.max(1, (km / 18 * 60).round());
+
+/// How many bajaj / taxi drivers are online right now — no names, no
+/// positions, just the count (so the app can show "3 bajaj online now"
+/// before someone requests a ride). Polls since the drivers table
+/// itself is private; refreshes every 12 s.
+final onlineDriverCountsProvider =
+    StreamProvider.autoDispose<Map<VehicleType, int>>((ref) {
+  final out = StreamController<Map<VehicleType, int>>();
+  final db = Supabase.instance.client;
+
+  Future<void> check() async {
+    try {
+      final rows = await db.rpc('online_driver_counts') as List;
+      final counts = <VehicleType, int>{
+        VehicleType.bajaj: 0,
+        VehicleType.taxi: 0,
+      };
+      for (final r in rows) {
+        final type = r['vehicle_type'] == 'taxi' ? VehicleType.taxi : VehicleType.bajaj;
+        counts[type] = (r['online_count'] as num?)?.toInt() ?? 0;
+      }
+      if (!out.isClosed) out.add(counts);
+    } catch (_) {} // offline — keep showing the last known counts
+  }
+
+  check();
+  final timer = Timer.periodic(const Duration(seconds: 12), (_) => check());
+  ref.onDispose(() {
+    timer.cancel();
+    out.close();
+  });
+  return out.stream;
+});

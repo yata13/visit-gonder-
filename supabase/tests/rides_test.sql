@@ -316,6 +316,26 @@ begin
   end;
   raise notice 'PASS 16 the office registers a driver directly, already approved';
 
+  -- 17) public live count — no names, no rows from the table itself
+  declare
+    v_bajaj_n int;
+    v_taxi_n  int;
+  begin
+    reset role;
+    perform set_config('request.jwt.claims', '', true);  -- truly anonymous: no leftover sub
+    set local role anon;
+    select online_count into v_bajaj_n from public.online_driver_counts() where vehicle_type = 'bajaj';
+    select online_count into v_taxi_n  from public.online_driver_counts() where vehicle_type = 'taxi';
+    -- v_driver (bajaj) and v_driver2... whichever is online from earlier tests count;
+    -- just check the shape + that it never exposes a row of the table itself.
+    if v_bajaj_n is null or v_taxi_n is null then
+      raise exception 'FAIL 17 missing a vehicle type in the count';
+    end if;
+    select count(*) into v_n from public.drivers; -- anon still sees 0 rows directly
+    if v_n <> 0 then raise exception 'FAIL 17b anon can read the drivers table directly'; end if;
+  end;
+  raise notice 'PASS 17 anon gets only the live count, never the drivers themselves';
+
   reset role;
   raise notice '✅ ALL RIDE TESTS PASSED';
 end $$;

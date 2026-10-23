@@ -7,7 +7,10 @@ import '../../providers/language_provider.dart';
 import '../../widgets/shimmer_image.dart';
 import '../hotels/hotels_screen.dart';
 import '../booking/my_bookings_screen.dart';
+import '../ride/ride_screen.dart';
+import '../../services/ride_service.dart';
 import '../../widgets/motion.dart';
+import '../../widgets/ui.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  STAY — everything a visitor needs on the ground:
@@ -220,23 +223,18 @@ class _HotelRow extends StatelessWidget {
   }
 }
 
-// ── Taxi tab ──────────────────────────────────────────────────
-class _TaxiTab extends StatelessWidget {
+// ── Taxi tab — live bajaj/taxi (ride-hailing) + static transfer info ──
+class _TaxiTab extends ConsumerWidget {
   final bool am;
   const _TaxiTab({super.key, required this.am});
 
   @override
-  Widget build(BuildContext context) {
-    final services = [
+  Widget build(BuildContext context, WidgetRef ref) {
+    final counts = ref.watch(onlineDriverCountsProvider).valueOrNull;
+    final others = [
       (Icons.flight_land, am ? 'የአውሮፕላን ማረፊያ ዝውውር' : 'Airport Transfer',
        am ? 'ከጎንደር አውሮፕላን ማረፊያ ወደ ሆቴልዎ' : 'Gondar Airport ↔ your hotel',
        '+251 91 100 2030'),
-      (Icons.local_taxi, am ? 'የከተማ ታክሲ' : 'City Taxi',
-       am ? 'በጎንደር ከተማ ውስጥ ጉዞ' : 'Rides anywhere inside Gondar',
-       '+251 91 200 4050'),
-      (Icons.electric_rickshaw, am ? 'ባጃጅ' : 'Bajaj (Tuk-tuk)',
-       am ? 'አጭር ርቀት፣ ርካሽ ጉዞ' : 'Short, cheap trips around town',
-       '+251 91 300 6070'),
       (Icons.directions_car, am ? 'መኪና ከሾፌር ጋር' : 'Car with Driver',
        am ? 'ሙሉ ቀን የቱሪስት ጉዞ' : 'Full-day tours & outskirts',
        '+251 91 400 8090'),
@@ -252,19 +250,88 @@ class _TaxiTab extends StatelessWidget {
           decoration: BoxDecoration(color: AppColors.charcoal,
               borderRadius: BorderRadius.circular(16)),
           child: Row(children: [
-            const Icon(Icons.info_outline, color: Colors.white, size: 20),
+            const Icon(Icons.bolt, color: AppColors.gold, size: 20),
             const SizedBox(width: 12),
             Expanded(child: Text(
-              am ? 'ለማዘዝ ይደውሉ። ዋጋ ከመሳፈርዎ በፊት ይስማሙ።'
-                 : 'Tap to call. Always agree the fare before you ride.',
+              am ? 'ባጃጅ ወይም ታክሲ ይጠይቁ — ዋጋው አስቀድሞ ይታያል፣ ሾፌሩ በካርታ ላይ ይከተላሉ።'
+                 : "Request a bajaj or taxi — see the price first, "
+                   'then follow your driver live on the map.',
               style: const TextStyle(color: Color(0xFFE6E6E6),
                   fontSize: 12.5, height: 1.4))),
           ]),
         ),
-        ...services.asMap().entries.map((e) => _fade(e.key,
+        _fade(0, _rideCard(context, Icons.electric_rickshaw,
+            am ? 'ባጃጅ' : 'Bajaj (Tuk-tuk)',
+            am ? 'አጭር ርቀት፣ ርካሽ ጉዞ' : 'Short, cheap trips around town',
+            counts?[VehicleType.bajaj], VehicleType.bajaj, am)),
+        _fade(1, _rideCard(context, Icons.local_taxi,
+            am ? 'የከተማ ታክሲ' : 'City Taxi',
+            am ? 'በጎንደር ከተማ ውስጥ ጉዞ' : 'Rides anywhere inside Gondar',
+            counts?[VehicleType.taxi], VehicleType.taxi, am)),
+        ...others.asMap().entries.map((e) => _fade(e.key + 2,
             _taxiCard(context, e.value.$1, e.value.$2, e.value.$3, e.value.$4,
                 am))),
       ]),
+    );
+  }
+
+  /// Live: shows how many drivers are online now and opens the real
+  /// ride-request flow (price, map, live driver tracking).
+  Widget _rideCard(BuildContext context, IconData icon, String title,
+      String sub, int? online, VehicleType type, bool am) {
+    final hasCount = online != null;
+    final isOpen = (online ?? 0) > 0;
+    return GestureDetector(
+      onTap: () => pushScreen(context, RideScreen(initialType: type)),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.surfaceVariant)),
+        child: Row(children: [
+          Container(width: 48, height: 48,
+            decoration: BoxDecoration(color: AppColors.gold.withAlpha(36),
+                borderRadius: BorderRadius.circular(13)),
+            child: Icon(icon, color: AppColors.goldDark, size: 24)),
+          const SizedBox(width: 14),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+            Text(title, style: const TextStyle(fontSize: 15,
+                fontWeight: FontWeight.w800, color: AppColors.charcoal)),
+            const SizedBox(height: 2),
+            Text(sub, style: const TextStyle(fontSize: 12,
+                color: AppColors.textMuted)),
+            const SizedBox(height: 4),
+            Row(children: [
+              Container(width: 7, height: 7,
+                decoration: BoxDecoration(shape: BoxShape.circle,
+                    color: !hasCount ? AppColors.textMuted
+                        : isOpen ? const Color(0xFF1F7A4D)
+                                 : AppColors.textMuted)),
+              const SizedBox(width: 6),
+              Text(
+                !hasCount
+                    ? (am ? 'በመፈተሽ ላይ…' : 'Checking…')
+                    : isOpen
+                        ? (am ? '$online ሾፌር አሁን ላይ' : '$online online now')
+                        : (am ? 'ለአፍታ ምንም ሾፌር የለም' : 'No driver online right now'),
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700,
+                    color: hasCount && isOpen
+                        ? const Color(0xFF1F7A4D) : AppColors.textMuted),
+              ),
+            ]),
+          ])),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(color: AppColors.charcoal,
+                borderRadius: BorderRadius.circular(999)),
+            child: Text(am ? 'ይጥሩ' : 'Request',
+                style: const TextStyle(color: Colors.white, fontSize: 12.5,
+                    fontWeight: FontWeight.w700)),
+          ),
+        ]),
+      ),
     );
   }
 
