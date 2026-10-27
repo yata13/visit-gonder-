@@ -50,7 +50,7 @@ npm run dev
 - **Supabase** — database (Postgres), auth, storage, realtime alerts
 - **flutter_map & Leaflet / OpenStreetMap** — free interactive maps
 - **Open-Meteo** — free live weather (today + 7 days), no API key
-- **Claude (Anthropic)** — the Ask Gondar AI, via the `ask-gondar` Supabase edge function
+- **Google Gemini** (free tier) — the Ask Gondar AI, via the `ask-gondar` Supabase edge function
 
 ## Two kinds of visitor
 
