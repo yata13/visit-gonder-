@@ -55,11 +55,11 @@ const CONTENT_TABLES = [
    Single-series marks use one brand hue; booking status uses the
    reserved status set (always shown with labels + counts). */
 const C = {
-  brand: "#9A5524", // brand brown, chroma-boosted for marks
+  brand: "#1F3326", // dark brand green — distinct from the money/status green
   money: "#1F7A4D",
   alert: "#C0392B",
-  grid: "#E2D9D0",
-  tick: "#6B5B4F",
+  grid: "#D3E0D6",
+  tick: "#5C6E60",
   status: {
     confirmed: "#1F7A4D",
     approved: "#1F7A4D",
@@ -71,7 +71,7 @@ const C = {
 
 const tooltipStyle = {
   borderRadius: 8,
-  border: "1px solid #E2D9D0",
+  border: "1px solid #D3E0D6",
   fontSize: 12,
   boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
 };

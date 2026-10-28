@@ -318,15 +318,17 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     let cancelled = false;
-    loadHistory()
-      .then((history) => {
-        if (cancelled) return;
-        setEvents((live) => {
-          const seen = new Set(live.map((e) => e.id));
-          return [...live, ...history.filter((e) => !seen.has(e.id))].slice(0, MAX_EVENTS);
-        });
-      })
-      .catch(() => {});
+    const backfill = () =>
+      loadHistory()
+        .then((history) => {
+          if (cancelled) return;
+          setEvents((live) => {
+            const seen = new Set(live.map((e) => e.id));
+            return [...live, ...history.filter((e) => !seen.has(e.id))].slice(0, MAX_EVENTS);
+          });
+        })
+        .catch(() => {});
+    backfill();
 
     // Coalesce bursts of changes into one refresh.
     let refreshTimer: ReturnType<typeof setTimeout> | undefined;
@@ -385,24 +387,55 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
       if (soundRef.current) chime(d.tone);
     };
 
-    let channel = supabase.channel("admin-live");
-    for (const table of WATCHED) {
-      channel = channel.on(
-        "postgres_changes",
-        { event: "*", schema: "public", table },
-        onChange(table),
-      );
-    }
-    channel.subscribe((status) => {
+    // A dropped websocket (phone sleep, tab backgrounded, network blip,
+    // token refresh) must reconnect on its own — the office TV cannot
+    // depend on someone noticing and reloading the page, especially
+    // for SOS. Any non-SUBSCRIBED terminal status gets a fresh channel
+    // after a short delay, with a backfill to catch whatever the gap
+    // missed.
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    let attempt = 0;
+
+    const connect = () => {
       if (cancelled) return;
-      setConnected(status === "SUBSCRIBED");
-    });
+      let ch = supabase.channel(`admin-live-${Date.now()}`);
+      for (const table of WATCHED) {
+        ch = ch.on("postgres_changes", { event: "*", schema: "public", table }, onChange(table));
+      }
+      channel = ch;
+      ch.subscribe((status) => {
+        if (cancelled || channel !== ch) return;
+        if (status === "SUBSCRIBED") {
+          attempt = 0;
+          setConnected(true);
+          return;
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          setConnected(false);
+          attempt += 1;
+          const delay = Math.min(1000 * 2 ** attempt, 15_000);
+          clearTimeout(reconnectTimer);
+          reconnectTimer = setTimeout(() => {
+            // Deferred to the next tick on purpose: calling removeChannel
+            // synchronously from inside this same subscribe callback (while
+            // the socket just closed) recurses inside supabase-js's own
+            // Phoenix channel teardown and blows the call stack.
+            supabase.removeChannel(ch);
+            backfill(); // pick up anything missed while disconnected
+            connect();
+          }, delay);
+        }
+      });
+    };
+    connect();
 
     return () => {
       cancelled = true;
       clearTimeout(refreshTimer);
       clearTimeout(pingTimer);
-      supabase.removeChannel(channel);
+      clearTimeout(reconnectTimer);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [queryClient]);
 
