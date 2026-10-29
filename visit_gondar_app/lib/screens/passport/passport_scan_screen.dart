@@ -23,6 +23,11 @@ class _PassportScanScreenState extends ConsumerState<PassportScanScreen> {
   final _camera = MobileScannerController(
     formats: const [BarcodeFormat.qrCode],
     detectionSpeed: DetectionSpeed.noDuplicates,
+    // Some Android devices auto-pick an odd native camera resolution that
+    // breaks the preview's cover-fit scaling (it renders as a tiny strip
+    // instead of filling the screen). A fixed, widely-supported resolution
+    // avoids that.
+    cameraResolution: const Size(1280, 720),
   );
   bool _busy = false;
   String? _error;
