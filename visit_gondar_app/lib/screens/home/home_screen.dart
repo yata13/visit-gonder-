@@ -757,11 +757,22 @@ class _UpcomingEvents extends ConsumerWidget {
     final events = ref.watch(eventsProvider).valueOrNull ?? const [];
     final today = DateTime.now();
     final startOfToday = DateTime(today.year, today.month, today.day);
+    // The admin's date field is free text ("e.g. 19 January 2027"), so
+    // most rows will not parse as a DateTime. Only drop a row if it DID
+    // parse and is clearly over — never hide one just because we could
+    // not read its date (same forgiving rule Explore already uses).
     final upcoming = events.where((e) {
       final d = DateTime.tryParse((e['date'] ?? '') as String);
-      return d != null && !d.isBefore(startOfToday);
+      return d == null || !d.isBefore(startOfToday);
     }).toList()
-      ..sort((a, b) => (a['date'] as String).compareTo(b['date'] as String));
+      ..sort((a, b) {
+        final da = DateTime.tryParse((a['date'] ?? '') as String);
+        final db = DateTime.tryParse((b['date'] ?? '') as String);
+        if (da == null && db == null) return 0;
+        if (da == null) return 1;
+        if (db == null) return -1;
+        return da.compareTo(db);
+      });
     if (upcoming.isEmpty) return const SizedBox.shrink();
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -783,7 +794,7 @@ class _UpcomingEvents extends ConsumerWidget {
             final e = upcoming[i];
             final isTimket = e['includes_timket'] == true;
             final name = (e['name'] ?? '') as String;
-            final date = DateTime.parse(e['date'] as String);
+            final date = DateTime.tryParse((e['date'] ?? '') as String);
             return Reveal(
               delay: Motion.stagger(i, stepMs: 70, max: 4),
               offset: const Offset(40, 0),
@@ -803,33 +814,52 @@ class _UpcomingEvents extends ConsumerWidget {
                         color: isTimket ? Colors.white : AppColors.ink,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                        Text(
-                            am ? EthDate.fromGregorian(date).monthName(true)
-                                : _mon(date.month),
-                            style: TextStyle(fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: isTimket ? AppColors.ink
-                                    : Colors.white)),
-                        Text(
-                            '${am ? EthDate.fromGregorian(date).day : date.day}',
-                            style: TextStyle(fontSize: 18,
-                                fontWeight: FontWeight.w800, height: 1.1,
-                                color: isTimket ? AppColors.ink
-                                    : Colors.white)),
-                      ]),
+                      child: date == null
+                          ? Icon(Icons.event_outlined, size: 20,
+                              color: isTimket ? AppColors.ink
+                                  : Colors.white)
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                            Text(
+                                am ? EthDate.fromGregorian(date)
+                                        .monthName(true)
+                                    : _mon(date.month),
+                                style: TextStyle(fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: isTimket ? AppColors.ink
+                                        : Colors.white)),
+                            Text(
+                                '${am ? EthDate.fromGregorian(date).day : date.day}',
+                                style: TextStyle(fontSize: 18,
+                                    fontWeight: FontWeight.w800, height: 1.1,
+                                    color: isTimket ? AppColors.ink
+                                        : Colors.white)),
+                          ]),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(name,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13, height: 1.25,
-                              fontWeight: FontWeight.w800,
-                              color: isTimket ? Colors.white
-                                  : AppColors.ink)),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        Text(name,
+                            maxLines: date == null ? 2 : 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 13, height: 1.25,
+                                fontWeight: FontWeight.w800,
+                                color: isTimket ? Colors.white
+                                    : AppColors.ink)),
+                        if (date == null &&
+                            ((e['date'] ?? '') as String).isNotEmpty)
+                          Text((e['date'] ?? '') as String,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 11,
+                                  color: isTimket
+                                      ? AppColors.onDarkMuted
+                                      : AppColors.muted)),
+                      ]),
                     ),
                   ]),
                 ),
