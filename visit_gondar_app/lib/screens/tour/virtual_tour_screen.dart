@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_theme.dart';
-import '../../providers/data_providers.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/tier_provider.dart';
-import '../../widgets/shimmer_image.dart';
 import '../../widgets/ui.dart';
 import '../../widgets/panorama_360.dart';
 import '../../core/constants/app_constants.dart';
@@ -196,20 +194,6 @@ class _TourState extends ConsumerState<_Tour> {
     super.dispose();
   }
 
-  /// Best photo for a stop from the live sites + places tables.
-  String _photoFor(_Stop stop, List<Map<String, dynamic>> rows,
-      String fallback) {
-    for (final k in stop.keywords) {
-      for (final r in rows) {
-        final name = ((r['name_en'] ?? r['name'] ?? '') as String)
-            .toLowerCase();
-        final photo = (r['photo'] ?? '') as String;
-        if (photo.isNotEmpty && name.contains(k)) return photo;
-      }
-    }
-    return fallback;
-  }
-
   void _go(int i) => _ctrl.animateToPage(i,
       duration: const Duration(milliseconds: 380),
       curve: Curves.easeOutCubic);
@@ -217,12 +201,6 @@ class _TourState extends ConsumerState<_Tour> {
   @override
   Widget build(BuildContext context) {
     final am = isAm(ref.watch(languageProvider));
-    final rows = [
-      ...ref.watch(sitesProvider).valueOrNull ?? const <Map<String, dynamic>>[],
-      ...ref.watch(placesProvider).valueOrNull ??
-          const <Map<String, dynamic>>[],
-    ];
-    final fasil = _photoFor(_stops.first, rows, '');
     final last = _page == _stops.length - 1;
 
     return Scaffold(
@@ -236,7 +214,6 @@ class _TourState extends ConsumerState<_Tour> {
             stop: _stops[i],
             index: i,
             am: am,
-            photo: _photoFor(_stops[i], rows, fasil),
           ),
         ),
 
@@ -283,39 +260,25 @@ class _TourState extends ConsumerState<_Tour> {
                       )),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
-                child: PressScale(
-                  onTap: () => pushScreen(
-                    context,
-                    Panorama360Screen(
-                      asset: _panorama,
-                      am: am,
-                      title: am ? _stops[_page].titleAm : _stops[_page].titleEn,
-                      initialHeading: _panoramaHeadings[
-                          _page % _panoramaHeadings.length],
-                    ),
+                child: Container(
+                  height: 32,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Container(
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: AppColors.brandGold,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [BoxShadow(
-                          color: Color(0x55000000), blurRadius: 12)],
-                    ),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.threesixty_rounded,
-                          size: 20, color: AppColors.black),
-                      const SizedBox(width: 6),
-                      Text(am ? 'በ360° ይመልከቱ' : 'Look around in 360°',
-                          style: const TextStyle(fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.black)),
-                    ]),
-                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.threesixty_rounded,
+                        size: 16, color: Colors.white),
+                    const SizedBox(width: 5),
+                    Text(am ? 'ለመዞር ይጎትቱ' : 'Drag to look around',
+                        style: const TextStyle(fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white)),
+                  ]),
                 ),
               ),
             ]),
@@ -382,40 +345,22 @@ class _StopPage extends StatelessWidget {
   final _Stop stop;
   final int index;
   final bool am;
-  final String photo;
   const _StopPage({
     required this.stop,
     required this.index,
     required this.am,
-    required this.photo,
   });
 
   @override
   Widget build(BuildContext context) {
     return Stack(fit: StackFit.expand, children: [
-      // Photo with a slow pan-and-zoom so it feels like walking in.
-      if (photo.isNotEmpty)
-        TweenAnimationBuilder<double>(
-          key: ValueKey('kb-$index'),
-          tween: Tween(begin: 1.0, end: 1.18),
-          duration: const Duration(seconds: 14),
-          curve: Curves.easeOut,
-          builder: (_, s, child) => Transform.scale(
-            scale: s,
-            alignment: index.isEven
-                ? Alignment.centerLeft
-                : Alignment.centerRight,
-            child: child,
-          ),
-          child: ShimmerImage(url: photo, borderRadius: BorderRadius.zero),
-        )
-      else
-        Container(
-          decoration: AppDecor.night(radius: 0),
-          alignment: const Alignment(0, -0.35),
-          child: Icon(stop.icon, size: 120,
-              color: Colors.white.withValues(alpha: 0.25)),
-        ),
+      // The 360° view itself is the stop's page — no extra tap needed
+      // to see it.
+      Panorama360(
+        key: ValueKey('pano-$index'),
+        asset: _panorama,
+        initialHeading: _panoramaHeadings[index % _panoramaHeadings.length],
+      ),
       const DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
