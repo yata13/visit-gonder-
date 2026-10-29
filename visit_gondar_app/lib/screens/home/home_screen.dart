@@ -383,6 +383,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _PassportCard(am: am, lang: lang),
         const SizedBox(height: 24),
 
+        // ── Upcoming events (Meskel, Timket and the rest) ────
+        _UpcomingEvents(am: am, lang: lang),
+
         // ── Places near you ──────────────────────────────────
         SectionHeader(
           title: am ? 'በአቅራቢያዎ ያሉ ቦታዎች' : 'Places near you',
@@ -735,6 +738,108 @@ class _PassportCard extends ConsumerWidget {
         ),
       ]),
     );
+  }
+}
+
+// ── Upcoming events (Meskel, Timket and the rest) ──────────────
+class _UpcomingEvents extends ConsumerWidget {
+  final bool am;
+  final String lang;
+  const _UpcomingEvents({required this.am, required this.lang});
+
+  static String _mon(int m) => const [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      ][m - 1];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final events = ref.watch(eventsProvider).valueOrNull ?? const [];
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+    final upcoming = events.where((e) {
+      final d = DateTime.tryParse((e['date'] ?? '') as String);
+      return d != null && !d.isBefore(startOfToday);
+    }).toList()
+      ..sort((a, b) => (a['date'] as String).compareTo(b['date'] as String));
+    if (upcoming.isEmpty) return const SizedBox.shrink();
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      SectionHeader(
+        title: am ? 'ቀጣይ ዝግጅቶች' : 'Upcoming events',
+        action: am ? 'ሁሉንም ይመልከቱ' : 'See all',
+        onAction: () => MainNavigation.goTo(context, 1),
+      ),
+      const SizedBox(height: 4),
+      SizedBox(
+        height: 108,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          clipBehavior: Clip.none,
+          physics: const BouncingScrollPhysics(),
+          itemCount: upcoming.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 10),
+          itemBuilder: (_, i) {
+            final e = upcoming[i];
+            final isTimket = e['includes_timket'] == true;
+            final name = (e['name'] ?? '') as String;
+            final date = DateTime.parse(e['date'] as String);
+            return Reveal(
+              delay: Motion.stagger(i, stepMs: 70, max: 4),
+              offset: const Offset(40, 0),
+              child: PressScale(
+                onTap: () => openEvent(context, e, lang),
+                child: Container(
+                  width: 170,
+                  padding: const EdgeInsets.all(12),
+                  decoration: isTimket
+                      ? AppDecor.night(radius: 22)
+                      : AppDecor.glass(radius: 22),
+                  child: Row(children: [
+                    Container(
+                      width: 46,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: isTimket ? Colors.white : AppColors.ink,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        Text(
+                            am ? EthDate.fromGregorian(date).monthName(true)
+                                : _mon(date.month),
+                            style: TextStyle(fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: isTimket ? AppColors.ink
+                                    : Colors.white)),
+                        Text(
+                            '${am ? EthDate.fromGregorian(date).day : date.day}',
+                            style: TextStyle(fontSize: 18,
+                                fontWeight: FontWeight.w800, height: 1.1,
+                                color: isTimket ? AppColors.ink
+                                    : Colors.white)),
+                      ]),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(name,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 13, height: 1.25,
+                              fontWeight: FontWeight.w800,
+                              color: isTimket ? Colors.white
+                                  : AppColors.ink)),
+                    ),
+                  ]),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      const SizedBox(height: 20),
+    ]);
   }
 }
 
