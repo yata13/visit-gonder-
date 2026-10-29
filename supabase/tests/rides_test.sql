@@ -256,6 +256,86 @@ begin
   end if;
   raise notice 'PASS 15 drivers'' list: own vehicle type only; old requests expire';
 
+  -- 16) office registers a driver directly (0022) — no self-apply needed
+  declare
+    v_new_email text;
+  begin
+    select email into v_new_email from auth.users where id = v_tourist;
+
+    -- only the city team can do this
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_tourist::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      perform public.admin_create_driver(v_new_email, 'Office Created', '+251933000000', 'taxi', 'TX-9');
+      raise exception 'FAIL 16 a non-editor registered a driver';
+    exception when others then
+      if sqlerrm like 'FAIL%' then raise; end if;
+    end;
+
+    -- an email with no account yet is refused
+    reset role;
+    insert into public.user_roles (user_id, role) values (v_admin, 'admin')
+      on conflict (user_id) do update set role = 'admin';
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_admin::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      perform public.admin_create_driver('nobody@nowhere.test', 'Nobody', '+251900000000', 'bajaj', 'AA-000');
+      raise exception 'FAIL 16b accepted an email with no account';
+    exception when others then
+      if sqlerrm like 'FAIL%' then raise; end if;
+    end;
+
+    -- the office creates one, already approved — no pending step
+    v_drv := public.admin_create_driver(v_new_email, 'Office Created', '+251933000000', 'taxi', 'tx-9', 'Silver sedan');
+    if v_drv.status <> 'approved' or v_drv.plate <> 'TX-9' or v_drv.approved_at is null then
+      raise exception 'FAIL 16c not approved immediately';
+    end if;
+
+    -- they can go online right away, with nothing of their own to fill in
+    reset role;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_tourist::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    v_drv := public.driver_set_online(true, 12.60, 37.45);
+    if not v_drv.is_online then raise exception 'FAIL 16d could not go online'; end if;
+
+    -- calling it again updates the same row (no duplicate)
+    reset role;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_admin::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    v_drv := public.admin_create_driver(v_new_email, 'Office Created', '+251933000000', 'bajaj', 'tx-9', null);
+    if v_drv.vehicle_type <> 'bajaj' then raise exception 'FAIL 16e second call did not update'; end if;
+    select count(*) into v_n from public.drivers where user_id = v_tourist;
+    if v_n <> 1 then raise exception 'FAIL 16f duplicate driver row'; end if;
+
+    reset role;
+    delete from public.user_roles where user_id = v_admin;
+  end;
+  raise notice 'PASS 16 the office registers a driver directly, already approved';
+
+  -- 17) public live count — no names, no rows from the table itself
+  declare
+    v_bajaj_n int;
+    v_taxi_n  int;
+  begin
+    reset role;
+    perform set_config('request.jwt.claims', '', true);  -- truly anonymous: no leftover sub
+    set local role anon;
+    select online_count into v_bajaj_n from public.online_driver_counts() where vehicle_type = 'bajaj';
+    select online_count into v_taxi_n  from public.online_driver_counts() where vehicle_type = 'taxi';
+    -- v_driver (bajaj) and v_driver2... whichever is online from earlier tests count;
+    -- just check the shape + that it never exposes a row of the table itself.
+    if v_bajaj_n is null or v_taxi_n is null then
+      raise exception 'FAIL 17 missing a vehicle type in the count';
+    end if;
+    select count(*) into v_n from public.drivers; -- anon still sees 0 rows directly
+    if v_n <> 0 then raise exception 'FAIL 17b anon can read the drivers table directly'; end if;
+  end;
+  raise notice 'PASS 17 anon gets only the live count, never the drivers themselves';
+
   reset role;
   raise notice '✅ ALL RIDE TESTS PASSED';
 end $$;

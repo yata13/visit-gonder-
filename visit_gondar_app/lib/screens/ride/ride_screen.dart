@@ -27,7 +27,9 @@ import '../stay/stay_screen.dart';
 class RideScreen extends ConsumerStatefulWidget {
   /// Optional destination chosen elsewhere (e.g. a place on the map).
   final RidePlace? destination;
-  const RideScreen({super.key, this.destination});
+  /// Optional vehicle pre-selected (e.g. tapped "Bajaj" on Stay & Services).
+  final VehicleType? initialType;
+  const RideScreen({super.key, this.destination, this.initialType});
 
   @override
   ConsumerState<RideScreen> createState() => _RideScreenState();
@@ -44,7 +46,7 @@ class _RideScreenState extends ConsumerState<RideScreen> {
 
   RidePlace? _pickup;
   late RidePlace? _dropoff = widget.destination;
-  VehicleType _type = VehicleType.bajaj;
+  late VehicleType _type = widget.initialType ?? VehicleType.bajaj;
   final Map<VehicleType, RideQuote> _quotes = {};
   bool _quoting = false;
   String? _quoteError;

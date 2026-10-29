@@ -1,31 +1,29 @@
 import * as React from "react";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import { BedDouble, CalendarCheck2, Hotel, MailCheck, Radio, UserRoundCheck } from "lucide-react";
+import { BedDouble, CalendarCheck2, Hotel, Radio, Store, UserRoundCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { cn, errorMessage } from "@/lib/utils";
+import { errorMessage } from "@/lib/utils";
 import { useAuth } from "./AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/form-fields";
 
-type Mode = "signin" | "signup";
-
+// Sign in only — no "create account" here. For security, partner
+// accounts are made by the Visit Gondar office in person (they check
+// the business and its documents), who then give the owner the email
+// and password to sign in with.
 export default function LoginPage() {
   const { session, loading } = useAuth();
-  const [mode, setMode] = React.useState<Mode>("signin");
-  const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [busy, setBusy] = React.useState(false);
-  const [sentTo, setSentTo] = React.useState<string | null>(null);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   if (!loading && session) return <Navigate to="/" replace />;
 
   function validate(): boolean {
     const e: Record<string, string> = {};
-    if (mode === "signup" && name.trim().length < 2) e.name = "Type your full name";
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) e.email = "Enter a valid email";
     if (password.length < 6) e.password = "At least 6 characters";
     setErrors(e);
@@ -37,25 +35,8 @@ export default function LoginPage() {
     if (!validate()) return;
     setBusy(true);
     try {
-      if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: { data: { full_name: name.trim() } },
-        });
-        if (error) throw error;
-        // Projects that confirm emails return no session yet.
-        if (!data.session) {
-          setSentTo(email.trim());
-          setMode("signin");
-        }
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) throw error;
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -82,7 +63,7 @@ export default function LoginPage() {
           className="absolute inset-0 opacity-[0.07]"
           style={{
             backgroundImage:
-              "repeating-linear-gradient(45deg, #D5A562 0 2px, transparent 2px 22px), repeating-linear-gradient(-45deg, #D5A562 0 2px, transparent 2px 22px)",
+              "repeating-linear-gradient(45deg, #B7E3BE 0 2px, transparent 2px 22px), repeating-linear-gradient(-45deg, #B7E3BE 0 2px, transparent 2px 22px)",
           }}
         />
         <div className="relative flex items-center gap-3">
@@ -117,8 +98,8 @@ export default function LoginPage() {
           </ul>
         </div>
         <p className="relative mt-12 text-xs text-white/40">
-          Same account as the Visit Gondar app. The Visit Gondar office connects your
-          business to your account.
+          New here? Visit the Visit Gondar office with your business details — they set up your
+          account and give you an email and password to sign in with.
         </p>
       </div>
 
@@ -135,51 +116,10 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <h1 className="text-2xl font-extrabold">
-            {mode === "signin" ? "Welcome back" : "Create your partner account"}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "signin"
-              ? "Sign in to manage your bookings."
-              : "For hotels and tour guides in Gondar."}
-          </p>
+          <h1 className="text-2xl font-extrabold">Welcome back</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Sign in to manage your bookings.</p>
 
-          <div className="mt-6 grid grid-cols-2 rounded-lg border bg-card p-1" role="tablist">
-            {(["signin", "signup"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                role="tab"
-                aria-selected={mode === m}
-                onClick={() => {
-                  setMode(m);
-                  setErrors({});
-                }}
-                className={cn(
-                  "rounded-md py-2 text-sm font-semibold transition-colors",
-                  mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent",
-                )}
-              >
-                {m === "signin" ? "Sign in" : "New partner"}
-              </button>
-            ))}
-          </div>
-
-          {sentTo && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg bg-success-bg p-3 text-sm text-success">
-              <MailCheck className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>
-                We sent a link to <b>{sentTo}</b>. Open it to confirm your email, then sign in here.
-              </span>
-            </div>
-          )}
-
-          <form onSubmit={onSubmit} className="mt-5 space-y-4" noValidate>
-            {mode === "signup" && (
-              <Field label="Full name" htmlFor="name" error={errors.name}>
-                <Input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
-              </Field>
-            )}
+          <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
             <Field label="Email" htmlFor="email" error={errors.email}>
               <Input
                 id="email"
@@ -194,24 +134,30 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
-                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </Field>
             <Button type="submit" className="h-10 w-full" disabled={busy}>
-              {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+              {busy ? "Please wait…" : "Sign in"}
             </Button>
-            {mode === "signin" && (
-              <button
-                type="button"
-                onClick={() => void onForgot()}
-                className="w-full text-center text-sm font-medium text-primary hover:underline"
-              >
-                Forgot password?
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => void onForgot()}
+              className="w-full text-center text-sm font-medium text-primary hover:underline"
+            >
+              Forgot password?
+            </button>
           </form>
+
+          <div className="mt-8 flex items-start gap-3 rounded-xl border bg-card p-4 text-sm text-muted-foreground lg:hidden">
+            <Store className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <span>
+              New here? Visit the Visit Gondar office with your business details — they set up
+              your account and give you an email and password.
+            </span>
+          </div>
         </div>
       </div>
     </div>

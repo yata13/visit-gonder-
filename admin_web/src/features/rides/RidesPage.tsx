@@ -48,12 +48,12 @@ function dot(color: string, label: string) {
   });
 }
 const PICKUP = dot("#1F7A4D", "");
-const DRIVER = dot("#7C4928", "🛺");
+const DRIVER = dot("#2E7D4F", "🛺");
 const DROPOFF = L.divIcon({
   className: "",
   iconSize: [14, 14],
   iconAnchor: [7, 7],
-  html: `<div style="width:14px;height:14px;border-radius:3px;background:#7C4928;border:2px solid white;box-shadow:0 1px 4px #0006"></div>`,
+  html: `<div style="width:14px;height:14px;border-radius:3px;background:#2E7D4F;border:2px solid white;box-shadow:0 1px 4px #0006"></div>`,
 });
 
 function isToday(iso: string | null) {
@@ -143,7 +143,7 @@ export default function RidesPage() {
               <React.Fragment key={r.id}>
                 <Polyline
                   positions={[[r.pickup_lat, r.pickup_lng], [r.dropoff_lat, r.dropoff_lng]]}
-                  pathOptions={{ color: "#7C4928", weight: 3, dashArray: "8 8", opacity: 0.7 }}
+                  pathOptions={{ color: "#2E7D4F", weight: 3, dashArray: "8 8", opacity: 0.7 }}
                 />
                 <Marker position={[r.dropoff_lat, r.dropoff_lng]} icon={DROPOFF}>
                   <Tooltip>{r.dropoff_label || "Destination"}</Tooltip>

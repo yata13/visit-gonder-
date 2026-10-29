@@ -10,23 +10,28 @@
 //                  ask about their own numbers in plain words and
 //                  get answers / draft notices from dashboard data.
 //
+//  Uses Google's Gemini (the free-of-charge tier works fine here —
+//  this chat does not need a paid model).
+//
 //  Deploy:   supabase functions deploy ask-gondar
-//  Secrets:  supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
-//            (SAFETY_DESK_PHONE is optional, defaults to 991)
+//  Secrets:  supabase secrets set GEMINI_API_KEY=AI...
+//            Get a free key at https://aistudio.google.com/apikey
+//            (no credit card needed for the free tier).
+//            GEMINI_MODEL is optional if Google ever renames the
+//            free model (default: gemini-2.5-flash).
+//            SAFETY_DESK_PHONE is optional, defaults to 991.
 //  SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY are
 //  provided by Supabase automatically.
 // ============================================================
-import Anthropic from "npm:@anthropic-ai/sdk@0.131.0";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { weatherSummary } from "../_shared/weather.ts";
 
-const MODEL = "claude-opus-5-5";
+const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const DAILY_LIMIT = { visitor: 50, city: 200 } as const;
 const MAX_TURNS = 12;
 const MAX_CHARS = 2000;
 const SAFETY_DESK = Deno.env.get("SAFETY_DESK_PHONE") ?? "991";
-
-const anthropic = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY") });
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -240,38 +245,51 @@ Deno.serve(async (req) => {
     timeZone: "Africa/Addis_Ababa", weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
+  if (!GEMINI_API_KEY) {
+    console.error("ask-gondar: GEMINI_API_KEY secret is not set");
+    return json({ error: "ai_unavailable" }, 502);
+  }
+
+  const systemText = `${mode === "city" ? CITY_RULES : VISITOR_RULES}\n\n` +
+    `Today in Gondar: ${today}.\n\n# ${mode === "city" ? "DASHBOARD DATA" : "CITY DATA"}\n\n` +
+    `${data || "(no data published yet)"}`;
+
   let answer: string;
   try {
-    const params: Anthropic.Beta.MessageCreateParamsNonStreaming = {
-      model: MODEL,
-      max_tokens: 4000,
-      output_config: { effort: "low" }, // chat: short, fast answers
-      // Re-run on Anthropic's recommended model if a safety classifier declines.
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      system: [
-        { type: "text", text: mode === "city" ? CITY_RULES : VISITOR_RULES },
-        {
-          type: "text",
-          text: `Today in Gondar: ${today}.\n\n# ${mode === "city" ? "DASHBOARD DATA" : "CITY DATA"}\n\n${data || "(no data published yet)"}`,
-        },
-      ],
-      messages: turns,
-    };
-    const res = await anthropic.beta.messages.create(params);
-    if (res.stop_reason === "refusal") {
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemText }] },
+          contents: turns.map((t) => ({
+            role: t.role === "assistant" ? "model" : "user",
+            parts: [{ text: t.content }],
+          })),
+          generationConfig: { maxOutputTokens: 2000, temperature: 0.4 },
+        }),
+      },
+    );
+    if (!geminiRes.ok) {
+      console.error("ask-gondar: Gemini request failed", geminiRes.status, await geminiRes.text());
+      return json({ error: "ai_unavailable" }, 502);
+    }
+    const payload = await geminiRes.json();
+    const blockReason = payload?.promptFeedback?.blockReason;
+    const finishReason = payload?.candidates?.[0]?.finishReason;
+    if (blockReason || finishReason === "SAFETY" || finishReason === "RECITATION") {
       answer = mode === "city"
         ? "Sorry, I can't help with that request."
         : `Sorry, I can't help with that. For help, call the City Safety Desk: ${SAFETY_DESK}.`;
     } else {
-      answer = res.content
-        .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
-        .map((b) => b.text)
+      answer = (payload?.candidates?.[0]?.content?.parts ?? [])
+        .map((p: { text?: string }) => p.text ?? "")
         .join("\n")
         .trim();
     }
   } catch (err) {
-    console.error("ask-gondar: Claude request failed", err);
+    console.error("ask-gondar: Gemini request failed", err);
     return json({ error: "ai_unavailable" }, 502);
   }
 

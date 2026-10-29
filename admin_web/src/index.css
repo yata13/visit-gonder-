@@ -1,43 +1,43 @@
 @import "tailwindcss";
 
 /* Visit Gondar admin theme — brand palette shared with the tourist app:
-   gold #D5A562 · cream #EEEBE9 · brown #7C4928 (deep brown #2A1A0F). */
+   green #2E7D4F · white/cream #F3F7F1 · light green #B7E3BE (deep green #16281C). */
 :root {
-  --background: 24 13% 92%; /* #EEEBE9 cream */
-  --foreground: 23 39% 13%; /* #2E1E14 dark brown text */
+  --background: 100 27% 96%; /* #F3F7F1 cream */
+  --foreground: 138 22% 12%; /* #17241B dark green text */
   --card: 0 0% 100%;
-  --card-foreground: 23 39% 13%;
+  --card-foreground: 138 22% 12%;
   --popover: 0 0% 100%;
-  --popover-foreground: 23 39% 13%;
-  --primary: 24 51% 32%; /* #7C4928 brown — main buttons */
+  --popover-foreground: 138 22% 12%;
+  --primary: 145 46% 34%; /* #2E7D4F green — main buttons */
   --primary-foreground: 0 0% 100%;
-  --secondary: 36 61% 91%; /* #F6EBDA gold wash */
-  --secondary-foreground: 24 51% 32%;
-  --muted: 27 15% 88%; /* #E5E0DC */
-  --muted-foreground: 26 15% 36%; /* #6B5B4F */
-  --accent: 36 61% 91%; /* gold wash hover */
-  --accent-foreground: 23 39% 13%;
+  --secondary: 133 33% 92%; /* #E3F1E6 green wash */
+  --secondary-foreground: 145 46% 34%;
+  --muted: 130 24% 90%; /* #E0ECE2 */
+  --muted-foreground: 133 9% 40%; /* #5C6E60 */
+  --accent: 133 33% 92%; /* green wash hover */
+  --accent-foreground: 138 22% 12%;
   --destructive: 0 75% 42%; /* #BA1A1A */
   --destructive-foreground: 0 0% 100%;
-  --border: 30 22% 81%; /* #D9CEC3 */
-  --input: 30 22% 78%;
-  --ring: 35 58% 61%; /* #D5A562 gold */
+  --border: 134 17% 85%; /* #D3E0D6 */
+  --input: 134 17% 80%;
+  --ring: 130 44% 80%; /* #B7E3BE light green */
   --radius: 0.625rem;
 
-  /* Brand gold for highlights (active nav, badges, live wall) */
-  --gold: 35 58% 61%; /* #D5A562 */
+  /* Brand light green for highlights (active nav, badges, live wall) */
+  --gold: 130 44% 80%; /* #B7E3BE */
 
   /* Status colors */
   --success: 150 60% 30%; /* #1F7A4D */
   --success-bg: 140 40% 92%;
-  --warning: 34 56% 42%; /* #A8732F amber-gold */
-  --warning-bg: 36 61% 91%;
-  --info: 24 51% 32%;
-  --info-bg: 36 61% 91%;
+  --warning: 34 56% 42%; /* #A8732F amber */
+  --warning-bg: 42 70% 92%;
+  --info: 145 46% 34%;
+  --info-bg: 133 33% 92%;
 
-  /* Deep brown sidebar */
-  --sidebar: 24 47% 11%; /* #2A1A0F */
-  --sidebar-hover: 25 45% 16%; /* #3A2516 */
+  /* Deep green sidebar */
+  --sidebar: 140 29% 12%; /* #16281C */
+  --sidebar-hover: 141 24% 16%; /* #1F3326 */
 }
 
 @theme inline {

@@ -10,9 +10,18 @@ project as the Visit Gondar tourist app, so the two apps talk to each other:
 4. The driver taps **I've arrived → Start trip → Complete trip** and collects
    the fare in cash. The tourist rates the driver.
 
-New drivers create an account in this app and send their details (name,
-phone, vehicle, plate). The Visit Gondar office approves them on the
-**Drivers** page of the admin website. The app opens by itself once approved.
+For security, drivers cannot create their own account in this app — there
+is no sign-up screen. A new driver comes to the Visit Gondar office with
+their ID and vehicle documents; the office:
+
+1. Creates their sign-in in **Supabase Dashboard → Authentication → Users
+   → Add user** (their email + a password the office gives them).
+2. Adds their name, phone, vehicle and plate on the admin website's
+   **Drivers** page → **Add driver**. They are approved immediately —
+   the office just checked them in person.
+
+The driver then opens this app and signs in with that email and password.
+Nothing else to fill in.
 
 ## Run it (Windows PowerShell)
 

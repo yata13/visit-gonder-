@@ -27,12 +27,20 @@ project as the Visit Gondar app and the admin site, so everything is live:
 
 ## How a hotel or guide gets in
 
-1. The partner opens the site → **New partner** → creates an account
-   (or signs in with their Visit Gondar app account).
-2. They fill **Connect your business** (hotel or guide, name, phone).
-3. The office opens the admin site → **Partners** → links the request to
-   the right hotel or guide.
-4. The partner's page turns into their dashboard by itself.
+For security, partners cannot create their own account on this site —
+there is no sign-up screen; the office needs to see their business
+details and documents first. A new partner comes to (or calls) the
+office, and the office:
+
+1. Creates their sign-in in **Supabase Dashboard → Authentication →
+   Users → Add user** (their email + a password the office gives them).
+2. Opens the admin website → **Partners** → **Link an owner by email** →
+   picks the hotel or guide and types that same email.
+
+The partner then opens this site and signs in. If the office created the
+login before linking it, the partner sees **Connect your business** —
+they can tell the office which listing is theirs from there instead of
+waiting for a call back. Once linked, their dashboard opens by itself.
 
 ## Put it on the internet
 

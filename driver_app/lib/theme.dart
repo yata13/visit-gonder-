@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  Visit Gondar brand, shared with the tourist app:
-//  gold #D5A562 · cream #EEEBE9 · brown #7C4928.
+//  green #2E7D4F · white/cream #F3F7F1 · light green #B7E3BE.
 // ═══════════════════════════════════════════════════════════════
 class VG {
-  static const gold = Color(0xFFD5A562);
-  static const cream = Color(0xFFEEEBE9);
-  static const brown = Color(0xFF7C4928);
-  static const deep = Color(0xFF2A1A0F);
-  static const ink = Color(0xFF2E1E14);
-  static const muted = Color(0xFF6B5B4F);
-  static const line = Color(0xFFD9CEC3);
-  static const goldTint = Color(0xFFF6EBDA);
+  static const gold = Color(0xFFB7E3BE);
+  static const cream = Color(0xFFF3F7F1);
+  static const brown = Color(0xFF2E7D4F);
+  static const deep = Color(0xFF16281C);
+  static const ink = Color(0xFF17241B);
+  static const muted = Color(0xFF5C6E60);
+  static const line = Color(0xFFD3E0D6);
+  static const goldTint = Color(0xFFE3F1E6);
   static const online = Color(0xFF1F7A4D);
   static const danger = Color(0xFFC4261D);
   static const blue = Color(0xFF2F6FB0);

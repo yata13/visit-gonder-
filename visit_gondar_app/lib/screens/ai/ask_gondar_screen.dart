@@ -288,7 +288,10 @@ class _ChatState extends State<_Chat> {
   String _errorText(String? code) {
     final am = widget.am;
     // Demo: while the AI is not live yet, answer with a warm hello.
-    if (AppConstants.demoMode && code != 'daily_limit') {
+    // Only for a genuine integration failure (or an unrecognised error) —
+    // premium/sign-in/limit messages below are specific and real, and must
+    // reach the person instead of being hidden behind this friendly cover.
+    if (AppConstants.demoMode && (code == null || code == 'ai_unavailable')) {
       return am
           ? 'ሰላም! 👋 እኔ የጎንደር መሪዎ ነኝ።\n\n'
               'ሙሉ መልሶቼ በቅርቡ ይመጣሉ — ይጠብቁን! 🏰\n\n'

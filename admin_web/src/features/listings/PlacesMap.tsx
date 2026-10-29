@@ -19,7 +19,7 @@ interface MapPlace {
 }
 
 function pinIcon(published: boolean): L.DivIcon {
-  const color = published ? "#7C4928" : "#B0AAA4";
+  const color = published ? "#2E7D4F" : "#B0AAA4";
   return L.divIcon({
     className: "",
     iconSize: [26, 26],
